@@ -102,6 +102,7 @@ class LightUpApp {
     this.pauseOverlay = document.getElementById('pauseOverlay');
     this.zoomSlider = document.getElementById('zoomSlider');
     this.zoomLevelLabel = document.getElementById('zoomLevelLabel');
+    this.boardContainer = document.getElementById('boardContainer');
 
     this.updateToolButtons();
   }
@@ -156,6 +157,17 @@ class LightUpApp {
       });
     }
     document.getElementById('btnZoomFit').addEventListener('click', () => this.fitBoard());
+
+    // Ctrl / Cmd + Mousewheel to zoom in / out (regular wheel scrolls naturally)
+    if (this.boardContainer) {
+      this.boardContainer.addEventListener('wheel', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          const step = e.deltaY < 0 ? 0.05 : -0.05;
+          this.setZoom(Math.round((this.zoomScale + step) * 100) / 100);
+        }
+      }, { passive: false });
+    }
 
     // Bottom action buttons
     document.getElementById('btnCheckDone').addEventListener('click', () => this.checkSolution(true));
@@ -592,12 +604,19 @@ class LightUpApp {
     const colCount = showCoords ? this.width + 1 : this.width;
     const rowCount = showCoords ? this.height + 1 : this.height;
 
-    // Ideal cell size based on board dimension
-    const baseCellSize = Math.max(22, Math.min(56, Math.floor(540 / Math.max(this.width, this.height))));
-    this.boardEl.style.setProperty('--cell-size', `${baseCellSize}px`);
+    // Ideal cell size based on board dimension and current zoom scale
+    this.baseCellSize = Math.max(20, Math.min(56, Math.floor(540 / Math.max(this.width, this.height))));
+    const cellSize = Math.max(16, Math.round(this.baseCellSize * this.zoomScale));
+    this.boardEl.style.setProperty('--cell-size', `${cellSize}px`);
     this.boardEl.style.gridTemplateColumns = showCoords
-      ? `24px repeat(${this.width}, ${baseCellSize}px)`
-      : `repeat(${this.width}, ${baseCellSize}px)`;
+      ? `24px repeat(${this.width}, ${cellSize}px)`
+      : `repeat(${this.width}, ${cellSize}px)`;
+    this.boardEl.style.gridTemplateRows = showCoords
+      ? `24px repeat(${this.height}, ${cellSize}px)`
+      : `repeat(${this.height}, ${cellSize}px)`;
+    if (this.boardViewport) {
+      this.boardViewport.style.transform = '';
+    }
 
     // Top coordinates
     if (showCoords) {
@@ -1172,10 +1191,25 @@ class LightUpApp {
 
   setZoom(scale, save = true) {
     this.zoomScale = Math.max(0.3, Math.min(2.5, scale));
-    this.boardViewport.style.transform = `scale(${this.zoomScale})`;
     if (this.zoomSlider) this.zoomSlider.value = this.zoomScale;
     if (this.zoomLevelLabel) {
       this.zoomLevelLabel.textContent = `${Math.round(this.zoomScale * 100)}%`;
+    }
+    // Clear any transform scale so board expands in natural DOM layout
+    if (this.boardViewport) {
+      this.boardViewport.style.transform = '';
+    }
+    if (this.boardEl && this.width && this.height) {
+      const showCoords = this.settings.showCoordinates;
+      const base = this.baseCellSize || Math.max(20, Math.min(56, Math.floor(540 / Math.max(this.width, this.height))));
+      const cellSize = Math.max(16, Math.round(base * this.zoomScale));
+      this.boardEl.style.setProperty('--cell-size', `${cellSize}px`);
+      this.boardEl.style.gridTemplateColumns = showCoords
+        ? `24px repeat(${this.width}, ${cellSize}px)`
+        : `repeat(${this.width}, ${cellSize}px)`;
+      this.boardEl.style.gridTemplateRows = showCoords
+        ? `24px repeat(${this.height}, ${cellSize}px)`
+        : `repeat(${this.height}, ${cellSize}px)`;
     }
     if (save) {
       this.saveZoomForCurrentSize(this.zoomScale);

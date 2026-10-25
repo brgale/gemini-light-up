@@ -425,19 +425,18 @@ body {
   flex: 1;
   overflow: auto;
   display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 24px;
   background: var(--bg-primary);
   position: relative;
+  -webkit-overflow-scrolling: touch;
 }
 
 .board-viewport {
+  margin: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transform-origin: center center;
-  transition: transform 0.1s ease-out;
+  padding-bottom: 30px;
 }
 
 .board-title-info {
@@ -471,6 +470,9 @@ body {
   cursor: pointer;
   transition: background-color 0.12s ease;
   font-weight: 700;
+  width: var(--cell-size);
+  height: var(--cell-size);
+  box-sizing: border-box;
 }
 
 .cell.wall {
