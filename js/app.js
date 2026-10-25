@@ -31,11 +31,23 @@ class LightUpApp {
     this.isPaused = false;
     this.isSolved = false;
 
-    // Zoom
+    // Zoom & Multi-touch Pinch/Pan
     this.zoomScale = 1.0;
     this.isPinching = false;
     this.pinchStartDistance = null;
     this.pinchStartZoom = 1.0;
+    this.pinchCurrentScaleRatio = 1.0;
+    this.pinchLastMidX = 0;
+    this.pinchLastMidY = 0;
+    this.pinchRaf = null;
+
+    // Single-finger / mouse panning
+    this.isPanning = false;
+    this.panStartX = 0;
+    this.panStartY = 0;
+    this.panStartScrollLeft = 0;
+    this.panStartScrollTop = 0;
+    this.isSpacePressed = false;
 
     // Settings
     this.settings = {
@@ -49,7 +61,7 @@ class LightUpApp {
       sound: true,
       highlightChange: true,
       precisionDrag: true,
-      drawStyle: 'cycle' // 'bulb' | 'cross' | 'cycle' | 'erase'
+      drawStyle: 'cycle' // 'bulb' | 'cross' | 'cycle' | 'erase' | 'pan'
     };
 
     // Current category & difficulty (restore last active)
@@ -235,8 +247,12 @@ class LightUpApp {
     // Settings inputs
     this.bindSettingsInputs();
 
-    // Global Mouse Events for drag
+    // Global Mouse Events for drag and panning
     window.addEventListener('mouseup', (e) => {
+      if (this.isPanning) {
+        this.isPanning = false;
+        if (document.body) document.body.classList.remove('is-panning');
+      }
       if (this.isMouseDown && this.dragAction && this.settings.precisionDrag && e && e.clientX !== undefined) {
         const el = document.elementFromPoint(e.clientX, e.clientY);
         const cell = el ? el.closest('.cell') : null;
@@ -263,8 +279,48 @@ class LightUpApp {
       }
     });
 
+    // Mousedown on board container for panning (Pan tool, Spacebar, middle mouse, or clicking walls/margins)
+    if (this.boardContainer) {
+      this.boardContainer.addEventListener('mousedown', (e) => {
+        if (this.isPaused || this.isSolved) return;
+        const target = e.target;
+        const cell = target ? target.closest('.cell') : null;
+        let isWhiteCell = false;
+        if (cell && cell.dataset.r !== undefined && cell.dataset.c !== undefined) {
+          const r = parseInt(cell.dataset.r, 10);
+          const c = parseInt(cell.dataset.c, 10);
+          if (!isNaN(r) && !isNaN(c) && this.board[r] && this.board[r][c] === -1) {
+            isWhiteCell = true;
+          }
+        }
+
+        if (this.settings.drawStyle === 'pan' || this.isSpacePressed || e.button === 1 || !isWhiteCell) {
+          if (e.button === 0 || e.button === 1) {
+            e.preventDefault();
+            this.isPanning = true;
+            this.panStartX = e.clientX;
+            this.panStartY = e.clientY;
+            this.panStartScrollLeft = this.boardContainer.scrollLeft;
+            this.panStartScrollTop = this.boardContainer.scrollTop;
+            if (document.body) document.body.classList.add('is-panning');
+          }
+        }
+      });
+    }
+
+    // Global mousemove for panning
+    window.addEventListener('mousemove', (e) => {
+      if (this.isPanning && this.boardContainer) {
+        const dx = e.clientX - this.panStartX;
+        const dy = e.clientY - this.panStartY;
+        this.boardContainer.scrollLeft = this.panStartScrollLeft - dx;
+        this.boardContainer.scrollTop = this.panStartScrollTop - dy;
+      }
+    });
+
     // Mousemove over board for continuous drag with precision hitbox
     this.boardEl.addEventListener('mousemove', (e) => {
+      if (this.isPanning) return;
       if (!this.isMouseDown || !this.dragAction) return;
       const el = document.elementFromPoint(e.clientX, e.clientY);
       const cell = el ? el.closest('.cell') : null;
@@ -277,47 +333,112 @@ class LightUpApp {
       }
     });
 
-    // Touch support for drag and multi-touch pinch to zoom anywhere on the board & container
+    // Touch support: Smooth GPU Pinch-to-Zoom & Real-time Pan anywhere on board/container
     if (this.boardContainer) {
       this.boardContainer.addEventListener('touchstart', (e) => {
         if (e.touches && e.touches.length >= 2) {
-          // Pinch-to-zoom initiated with 2 fingers: cancel single-finger cell drag immediately
+          // Two fingers: initiates fluid multi-touch pinch & pan
           this.isPinching = true;
+          this.isPanning = false;
           this.isMouseDown = false;
           this.dragAction = null;
           this.lastDragCell = null;
+          if (document.body) document.body.classList.remove('is-panning');
+
           const t1 = e.touches[0];
           const t2 = e.touches[1];
           this.pinchStartDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
           this.pinchStartZoom = this.zoomScale;
+          this.pinchScaleRatio = 1.0;
+          this.pinchLastMidX = (t1.clientX + t2.clientX) / 2;
+          this.pinchLastMidY = (t1.clientY + t2.clientY) / 2;
+          return;
         }
-      }, { passive: true });
+
+        if (e.touches && e.touches.length === 1) {
+          const touch = e.touches[0];
+          const el = document.elementFromPoint(touch.clientX, touch.clientY);
+          const cell = el ? el.closest('.cell') : null;
+          let isWhiteCell = false;
+          if (cell && cell.dataset.r !== undefined && cell.dataset.c !== undefined) {
+            const r = parseInt(cell.dataset.r, 10);
+            const c = parseInt(cell.dataset.c, 10);
+            if (!isNaN(r) && !isNaN(c) && this.board[r] && this.board[r][c] === -1) {
+              isWhiteCell = true;
+            }
+          }
+
+          // Single finger pan if Pan tool is active OR touch is on wall or background
+          if (this.settings.drawStyle === 'pan' || !isWhiteCell) {
+            this.isPanning = true;
+            this.panStartX = touch.clientX;
+            this.panStartY = touch.clientY;
+            this.panStartScrollLeft = this.boardContainer.scrollLeft;
+            this.panStartScrollTop = this.boardContainer.scrollTop;
+            if (document.body) document.body.classList.add('is-panning');
+          }
+        }
+      }, { passive: false });
 
       this.boardContainer.addEventListener('touchmove', (e) => {
         if (e.touches && e.touches.length >= 2) {
-          // Two-finger pinch active: zoom puzzle smoothly
+          // Multi-touch pinch & pan active
           if (e.cancelable) e.preventDefault();
           this.isPinching = true;
+          this.isPanning = false;
           this.isMouseDown = false;
           this.dragAction = null;
           this.lastDragCell = null;
 
           const t1 = e.touches[0];
           const t2 = e.touches[1];
-          const currentDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+          const midX = (t1.clientX + t2.clientX) / 2;
+          const midY = (t1.clientY + t2.clientY) / 2;
+
+          // Two-finger Pan
+          const dx = midX - this.pinchLastMidX;
+          const dy = midY - this.pinchLastMidY;
+          this.pinchLastMidX = midX;
+          this.pinchLastMidY = midY;
+          this.boardContainer.scrollLeft -= dx;
+          this.boardContainer.scrollTop -= dy;
+
+          // Two-finger GPU-accelerated smooth Pinch Zoom
+          const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
           if (this.pinchStartDistance && this.pinchStartDistance > 0) {
-            const factor = currentDist / this.pinchStartDistance;
-            const targetZoom = Math.max(0.3, Math.min(2.5, Math.round(this.pinchStartZoom * factor * 100) / 100));
-            this.setZoom(targetZoom, false);
+            this.pinchScaleRatio = dist / this.pinchStartDistance;
+            if (!this.pinchRaf) {
+              this.pinchRaf = requestAnimationFrame(() => {
+                this.pinchRaf = null;
+                if (this.isPinching && this.boardViewport) {
+                  this.boardViewport.style.transform = `scale(${this.pinchScaleRatio})`;
+                  this.boardViewport.style.transformOrigin = 'center center';
+                  const previewZoom = Math.round(this.pinchStartZoom * this.pinchScaleRatio * 100);
+                  if (this.zoomLevelLabel) {
+                    this.zoomLevelLabel.textContent = `${previewZoom}%`;
+                  }
+                }
+              });
+            }
           }
           return;
         }
 
-        if (this.isPinching) {
+        // Single-finger panning
+        if (this.isPanning && e.touches && e.touches.length === 1) {
+          if (e.cancelable) e.preventDefault();
+          const touch = e.touches[0];
+          const dx = touch.clientX - this.panStartX;
+          const dy = touch.clientY - this.panStartY;
+          this.boardContainer.scrollLeft = this.panStartScrollLeft - dx;
+          this.boardContainer.scrollTop = this.panStartScrollTop - dy;
           return;
         }
 
-        // Single-finger drag with precision hitbox
+        if (this.isPinching) return;
+        if (this.settings.drawStyle === 'pan') return;
+
+        // Single-finger drawing drag with precision hitbox
         if (!this.isMouseDown || !this.dragAction) return;
         const touch = e.touches[0];
         if (!touch) return;
@@ -331,44 +452,34 @@ class LightUpApp {
           }
         }
       }, { passive: false });
-
-      // Native Safari gesture events for iPad
-      this.boardContainer.addEventListener('gesturestart', (e) => {
-        e.preventDefault();
-        this.isPinching = true;
-        this.pinchStartZoom = this.zoomScale;
-        this.isMouseDown = false;
-        this.dragAction = null;
-        this.lastDragCell = null;
-      });
-      this.boardContainer.addEventListener('gesturechange', (e) => {
-        e.preventDefault();
-        if (this.isPinching && e.scale) {
-          const targetZoom = Math.max(0.3, Math.min(2.5, Math.round(this.pinchStartZoom * e.scale * 100) / 100));
-          this.setZoom(targetZoom, false);
-        }
-      });
-      this.boardContainer.addEventListener('gestureend', (e) => {
-        e.preventDefault();
-        if (this.isPinching) {
-          this.isPinching = false;
-          this.pinchStartDistance = null;
-          this.saveZoomForCurrentSize(this.zoomScale);
-        }
-      });
     }
 
     window.addEventListener('touchend', (e) => {
       if (this.isPinching) {
         if (!e.touches || e.touches.length < 2) {
           this.isPinching = false;
+          if (this.pinchRaf) {
+            cancelAnimationFrame(this.pinchRaf);
+            this.pinchRaf = null;
+          }
+          if (this.boardViewport) {
+            this.boardViewport.style.transform = '';
+            this.boardViewport.style.transformOrigin = '';
+          }
+          const finalZoom = Math.max(0.3, Math.min(2.5, Math.round(this.pinchStartZoom * (this.pinchScaleRatio || 1.0) * 100) / 100));
+          this.setZoom(finalZoom, true);
           this.pinchStartDistance = null;
-          this.saveZoomForCurrentSize(this.zoomScale);
+          this.pinchScaleRatio = 1.0;
         }
         this.isMouseDown = false;
         this.dragAction = null;
         this.lastDragCell = null;
         return;
+      }
+
+      if (this.isPanning) {
+        this.isPanning = false;
+        if (document.body) document.body.classList.remove('is-panning');
       }
 
       if (this.isMouseDown && this.dragAction && this.settings.precisionDrag && e && e.changedTouches && e.changedTouches[0]) {
@@ -393,7 +504,22 @@ class LightUpApp {
     });
 
     // Keyboard Shortcuts
-    window.addEventListener('keydown', (e) => this.handleKeyDown(e));
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && !this.isSpacePressed && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && !this.isPaused) {
+        this.isSpacePressed = true;
+        if (document.body) document.body.classList.add('is-panning');
+      }
+      this.handleKeyDown(e);
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') {
+        this.isSpacePressed = false;
+        if (!this.isPanning && document.body) {
+          document.body.classList.remove('is-panning');
+        }
+      }
+    });
 
     // Custom Generator modal
     document.getElementById('btnCustomPuzzle').addEventListener('click', () => this.openModal('customModal'));
@@ -450,6 +576,9 @@ class LightUpApp {
     document.querySelectorAll('.tool-btn').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-tool') === this.settings.drawStyle);
     });
+    if (document.body) {
+      document.body.setAttribute('data-tool', this.settings.drawStyle);
+    }
   }
 
   getCategoryKey(cat = this.currentCat, diff = this.currentDiff) {
@@ -892,6 +1021,16 @@ class LightUpApp {
 
   handleCellMouseDown(e, r, c) {
     if (this.isPaused || this.isSolved) return;
+    if (this.settings.drawStyle === 'pan' || this.isSpacePressed) {
+      if (e) e.preventDefault();
+      this.isPanning = true;
+      this.panStartX = e.clientX;
+      this.panStartY = e.clientY;
+      this.panStartScrollLeft = this.boardContainer.scrollLeft;
+      this.panStartScrollTop = this.boardContainer.scrollTop;
+      if (document.body) document.body.classList.add('is-panning');
+      return;
+    }
     if (this.board[r][c] !== -1) return;
     if (e) e.preventDefault();
 
@@ -1154,6 +1293,29 @@ class LightUpApp {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
     const { r, c } = this.focusedCell;
+
+    // Tool selection shortcuts
+    if (e.key === '1') {
+      this.settings.drawStyle = 'bulb';
+      this.updateToolButtons();
+      return;
+    } else if (e.key === '2') {
+      this.settings.drawStyle = 'cross';
+      this.updateToolButtons();
+      return;
+    } else if (e.key === '3') {
+      this.settings.drawStyle = 'cycle';
+      this.updateToolButtons();
+      return;
+    } else if (e.key === '4') {
+      this.settings.drawStyle = 'erase';
+      this.updateToolButtons();
+      return;
+    } else if (e.key === '5') {
+      this.settings.drawStyle = 'pan';
+      this.updateToolButtons();
+      return;
+    }
 
     if (e.key === 'ArrowUp' && r > 0) {
       this.focusedCell.r--;

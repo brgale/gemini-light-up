@@ -449,7 +449,8 @@ body {
   background: var(--bg-primary);
   position: relative;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x pan-y pinch-zoom;
+  touch-action: none;
+  scroll-behavior: auto;
 }
 
 .board-viewport {
@@ -458,6 +459,7 @@ body {
   flex-direction: column;
   align-items: center;
   padding-bottom: 30px;
+  will-change: transform;
 }
 
 .board-title-info {
@@ -478,7 +480,18 @@ body {
   border-radius: 4px;
   box-shadow: var(--shadow-md);
   user-select: none;
-  touch-action: pinch-zoom;
+  touch-action: none;
+}
+
+/* Pan Tool Cursor Styles */
+body[data-tool="pan"] .board-container,
+body[data-tool="pan"] .cell {
+  cursor: grab !important;
+}
+
+body.is-panning .board-container,
+body.is-panning .cell {
+  cursor: grabbing !important;
 }
 
 /* Cell Styles */
