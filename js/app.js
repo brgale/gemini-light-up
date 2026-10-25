@@ -646,8 +646,6 @@ class LightUpApp {
         cell.className = 'cell';
         cell.dataset.r = r;
         cell.dataset.c = c;
-        cell.style.width = `${baseCellSize}px`;
-        cell.style.height = `${baseCellSize}px`;
 
         if (this.focusedCell.r === r && this.focusedCell.c === c) {
           cell.classList.add('keyboard-focus');

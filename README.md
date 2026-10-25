@@ -1,4 +1,4 @@
-# Gemini Light Up - Offline Edition (Version 1.7)
+# Gemini Light Up - Offline Edition (Version 1.8)
 
 A fully featured, standalone, 100% offline version of the popular logic puzzle game **Light Up** (also known as **Akari**, Japanese: 美術館), inspired by [puzzle-light-up.com](https://www.puzzle-light-up.com/).
 
@@ -14,11 +14,18 @@ Zero internet connection or external servers required. Works completely out of t
   - **10×10** (Easy, Normal, Hard)
   - **14×14** (Easy, Normal, Hard)
   - **25×25** (Easy, Normal, Hard)
-- **Built-in Library of 63 Authentic Puzzles**: Instantly playable without generating.
+  - **Special Daily** (30×30)
+  - **Special Weekly** (30×40)
+  - **Special Monthly** (40×50)
+- **Built-in Library of 220+ Authentic Puzzles**: Instantly playable without generating.
 - **Daily, Weekly, and Monthly Challenges**:
-  - Deterministic seed generator creates a fresh official daily puzzle for every date!
+  - Authentic large format special puzzles for every challenge period!
 - **Procedural Offline Generator**:
-  - Automatically generates unlimited new puzzles of any dimensions (5×5 up to 25×25) with rotational symmetry and guaranteed unique solutions.
+  - Automatically generates unlimited new puzzles of any dimensions with rotational symmetry and guaranteed unique solutions.
+- **Personal Leaderboard**:
+  - Tracks top 10 best times per puzzle size & difficulty with medals, rank badges, and new record notifications.
+- **Smart Pause & Auto-Resume**:
+  - Automatically pauses game timer and protects puzzle state when switching tabs or clicking out of the browser.
 - **Import / Export Compatibility**:
   - Full bidirectional compatibility with the exact task strings used by `puzzle-light-up.com` (e.g. `b2a0f0bBBd1g3d00bBf1a2b`).
   - Copy and share puzzle codes with anyone.
