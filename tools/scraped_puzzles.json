@@ -1,0 +1,132 @@
+[
+  {
+    "sizeIdx": 0,
+    "cat": "7x7",
+    "diff": "easy",
+    "w": 7,
+    "h": 7,
+    "task": "b2a0f0bBBd1g3d00bBf1a2b"
+  },
+  {
+    "sizeIdx": 3,
+    "cat": "10x10",
+    "diff": "easy",
+    "w": 10,
+    "h": 10,
+    "task": "bBBg2c2b0jBd1dBaBd1f2d0a1dBd2j2bBc3gBBb"
+  },
+  {
+    "sizeIdx": 6,
+    "cat": "14x14",
+    "diff": "easy",
+    "w": 14,
+    "h": 14,
+    "task": "bBa2b1c2d2e1a2cBc0gB1aBe2Bj0eBa0aBaBeBd2b0b0BlBBbBb2d0e2aBaBa2eBj02e0a0Bg2c0c1aBeBd0cBbBa0b"
+  },
+  {
+    "sizeIdx": 9,
+    "cat": "25x25",
+    "diff": "easy",
+    "w": 25,
+    "h": 25,
+    "task": "d0aB1cBaB0eBB2c2eBaBbBbB0dBa2aBa4c0dBcBaB1cBbBBa3d1bBa0d1b0c1fBfBi0f1a0g1j1Bb2aBcB1bBa12bBaBbBe0aBbBf3bBBaBc01bBBfBB2a4dB2f1bBa100f0aBcBdBfB1g2b0bB1cBaBgBBaBaBdBb2eBbBdBa3aBBgBa2cB2bBbBg0Bf2dBcBa1fBBBa1b0f1BdBa3BBfBBb2Bc0aBBbBf2bBa1eBbBa0bB1a1b1BcBa2bB1jBgBaBfBiBf0f1c0b2d0a1b1d2aBBb2cB3aBcBdBc3aBaBaBd20bBbBaBe1c1BBeBBaBcBBaBd"
+  },
+  {
+    "sizeIdx": 13,
+    "cat": "special",
+    "diff": "daily",
+    "w": 30,
+    "h": 30,
+    "task": "bBa2aB1a1Bb1h0bBBaBaBcBcBdBbBcBk3k2a2b2dBb2a2Bb3cBb2BBBaBB2bBa1BbBcBdBBb1e0eBBeBBbBbBb0h1eB12gBaBb0a1cBBbBa2dBc01bB1bBd3b1bBbBBc1bBdBbBbBbBbBc4b1BcBbBa1b2aBeBjBcBbBl0Ba0b2aBb1bBfB0bB1f0gBf1a1gB0BfBcBd01Bd1aBdBa0cBdBa3Bc0BaBBbBa1Bc2bBb3c3dBcBbBbBcBBaBbBBaBBcB1a0d1cBa3d1aBdB10d0c2f1BBg2a1fBgBfB0b11f1bBb1a0bBaBBl3b1c1j1eBaBbBa2b2cB1b1c0b2b2bBb2d1bBcBBb2bBb1dBbB1bBBc1d1aBbB0c1aBbBa1g110eBh0b1bBbB0eB3eBeBbB0d1cBbB2aBbBBBa2BB1b1c2bBBaBb1d0b1a2kBk1cBbBdBcBc3aBa2Bb0h1bB2aBBa1aBb"
+  },
+  {
+    "sizeIdx": 1,
+    "cat": "7x7",
+    "diff": "normal",
+    "w": 7,
+    "h": 7,
+    "task": "a1b1d2cBBd2d1d2d03cBd0bBa",
+    "puzzleID": "6677565"
+  },
+  {
+    "sizeIdx": 2,
+    "cat": "7x7",
+    "diff": "hard",
+    "w": 7,
+    "h": 7,
+    "task": "d1Ba0fBa0aBk2a2a1f1aB0d",
+    "puzzleID": "6088117"
+  },
+  {
+    "sizeIdx": 4,
+    "cat": "10x10",
+    "diff": "normal",
+    "w": 10,
+    "h": 10,
+    "task": "bB1jBaBe2d1a1a1g1h2b1h0g0a2aBdBe2a0jB2b",
+    "puzzleID": "810649"
+  },
+  {
+    "sizeIdx": 5,
+    "cat": "10x10",
+    "diff": "hard",
+    "w": 10,
+    "h": 10,
+    "task": "gBe2a2d1eBeBa0c2b0d1f1d4b1c2aBe1eBdBa2e1g",
+    "puzzleID": "8181290"
+  },
+  {
+    "sizeIdx": 7,
+    "cat": "14x14",
+    "diff": "normal",
+    "w": 14,
+    "h": 14,
+    "task": "b11cBgBaBBb1cB0bBgBcBl1Bb0a10aBaBb2jBdB0b1rBbB1d1j1b0aBa01aBb1BlBc0gBb20cBb2BaBgBcB1b",
+    "puzzleID": "4155983"
+  },
+  {
+    "sizeIdx": 8,
+    "cat": "14x14",
+    "diff": "hard",
+    "w": 14,
+    "h": 14,
+    "task": "a0cBbBaBf1eBcBbBg01b3a10b1c1a1b3dBg2d1b2d1i10f20iBdBb0dBgBd2b2a0c2b1Ba1bBBgBb0cBe1fBa3bBc1a",
+    "puzzleID": "2112806"
+  },
+  {
+    "sizeIdx": 10,
+    "cat": "25x25",
+    "diff": "normal",
+    "w": 25,
+    "h": 25,
+    "task": "e1a1bBfBaBgBf1b1a0cBaBa2c4aBa1c0Bh1a3a2cBb0e2a3h3cBd1B0cBa1BiBaBeBBeBeBBa0aBg2bBB11aBbBdBe0aBbBBBf1cBi1eBa2aBBhB01aBc2cBaB0b11b2bBaBe2BhBaBc2bBBbBBaBcBcBd0bBaB1aB2cB2a1BaBb1d1c0cBa1BbBBbBcBaBhBBeBa3b1b20b12aBcBcBa1BBhB1aBa0eBiBcBfB10bBa1eBd1b0aBBBBb1g2a1aBBeBeB1eBaBiBBaBc1B1d3c2h1a0eBbBc3a3aBhBBc1a1aBc3aBaBc1a2b2f3g2aBf1bBaBe",
+    "puzzleID": "3055475"
+  },
+  {
+    "sizeIdx": 11,
+    "cat": "25x25",
+    "diff": "hard",
+    "w": 25,
+    "h": 25,
+    "task": "1cBB2aBa1c1eBbBB0Bi0c2BaBBaBa1c2b0aBeBeBBa1cBe1e1c0aBeBaBfB0mBaBBBhB0c1d1a0a2e01eB1hBc2aBbBc2aBBbBbB1cBfBdBb0BBe1a1dB1bBi2d0eBBbBbBBBdBc0bB2a1bBaBB21iBfBa2cBaBc2aBfBiB2BBa4bBa1Bb1cBdBBBbBbBBe0dBiBbB1dBaBe1BBb1d1fBc00bBb1Ba3cBbBaBcBhBBe11e2aBa0d0c1BhBBBa0mB0fBa2e0aBc1e1eBc3aBBe2eBa0b2cBaBaB2aBBcBiBB0BbBeBc1a0aBB0c0",
+    "puzzleID": "269386"
+  },
+  {
+    "sizeIdx": 12,
+    "cat": "special",
+    "diff": "weekly",
+    "w": 25,
+    "h": 25,
+    "task": "aBb2BcBaBfBaBcBBb2aBBBb1a1b1bBb2b3b0a0bBBBa2BBbBaBaBhBaBa1bBBBcBBBeBa1dBaBeB11bBe1a1b1fBb0aBeBB1fBBd11dBBf2BbBBb0bB0h1Bb1b0BbB0eBaBBa3aBBa0aBBaBeBB1f0e2bBe2fBb11a1eBBd2Be0aB0fBa0aBd1bBdBaBa1hBaBa2l1aBaBe0aBcBfB1fBcBaBbBa03bBb2aBaB0a1aBbBbBBaBcBBaBaBBc0BBBB1cBBa4aB2cBaBBeBcBBcBeBBaBf02aB0bBaB0aBbBBaB1f1a1bBcBBBdBBBcBbBa2bBaBeBj1eBaBaBBaBa2bBb1a0b2aBbBb0aBaBBBBaBa1bBbBaBb0a0b3bBaBaBBaBaBe0jBeBaBb1a1bBcB00dBB2cBb1aBfBBaB2b0aBBa1bBBaB1fBa0BeBcBBcBeB0aBcBBa1aBBcBBBBBBcB1aBaB1cBaBBbBbBa2aBBa3aBbBbB1aBbBa3c1fBBfBcBa1eBaBaBl0aBa1h1a2a1dBb1d2aBaBf11aBeB0dB1e0aB0bBf0eBb1eBfBB0e0aB1aBaB1a2aB1a2eBBbB0bBbB0hBBb2b1BbBBfB1d01dBBf2BBe3aBbBfBbBaBeBb2B1eBa0d1a3eB1BcBBBbBaBa1hBaBaBbBB2aBBBb1aBbBbBb0bBb1a2bBBBa1bBBc1aBfBaBcBBb1a",
+    "puzzleID": "12"
+  },
+  {
+    "sizeIdx": 14,
+    "cat": "special",
+    "diff": "monthly",
+    "w": 30,
+    "h": 30,
+    "task": "a0B1aB0d1b1bBBB0BBbBb1dBBaBBBdBaBBB1gBB0bBB2gBB1Ba1dBa2aBc2BbB2aBaBb0aBaB1bBBcBaBa1aBcBc2bBcBBfBBc0bBc3cBdB0eBBBbBbBBbBbBBBeBBgBBbBBdBB11aBBB0a0BB0d0Bb1Bd0B1h0fBBfBh0B1aBgBeBaBBd02aBeBg1a1B1bBaBBa1Bb1aB0bBBaBb1BaBBaBbBBBcBa21a2a2Ba1bBc0BcBbBa1Ba2aB0aBcBcBaBb2cBa2BdB1aBc2bBa1c4eBBBcBBb1dBBdBb3BcB1Bd01BaBbBBa0b2dBbBd2bBaBBbBaBBBBcBBbBaBBcBBaBb1a0BcBBaBbBBcBa2aBBB2dBc0bBbBbBcBd1B1Ba3aBhBaBBBlBBBaBhBB0bBc2bBaBbBa0bBaBbBaBbBcBbBBBBaBc0BBbBaBBBfBB1aBbBB0cBaBBBaBa4bBbB2BaBBa2dBaBBaBB3b0bBaBaBa1BbBBBa2c0BaBaBbBa1aBBcBaBB0b1BbBaBaBaBaBBrBBa0a1aBaBaBaBBa2cBBc1b21bBBbBcB1c1aB1a2b1BdBb0b2aBaBbBa3a1bBbBdBBd1cBhBbBBBBbBhBcBbB1bBBBbBa1b1b0aBBaBbBb0aBbBBBbBB1BbBBBbBa0bBbBaBBaBb0bBa3bBBBbBBbBcBhBb1B02bBhBc2dB0d3bBbBa1aBbBa2aBbBbBd0BbBaBBaBcB1cBbBBb0Bb1cBBc0aBBaBa1a2aBa1aBBrBBa2a1aBa2bBBbBBBa1cBBaBaBb1aBaBBc2aBB1bBBaBaBa3b1bBB1aBBa3d3aBBaBB1b0bBaBaBBBa4cBBBbBaBBBfBB1aBbBBBcBaBBB0bBc1b2aBbBaBb0a1bBaBbBc1bBBBhBaBBBlB2Ba0hBaBaBBB2d0cBb1b0b0cBdBB1BaBaBcB2bBaBBc11a1bBa1BcBBa0bBBcBB20aBbBBaBb0dBbBdBbBa2Bb1a0BBd1BBcBBb0d11d0bBBcBBBe1cBaBb1c1aBBd1Ba2cBbBa2c1cBaB2a3aBBa2bBcB0cBbBaBBaBaBBaBcBBBbBaB2aBBbBaBBbBBaBb02a0BaBb11Ba0gBeBaB2dB3aBeBg2a1B2hBfBBfBhBB1dBBbBBdBBBBaBBBBaBBBBd10bB0gBBe1B0bBbB2bBb2B1eBBdBcBc3b0cBBfBBcBbBc3cBaBa0aBcBBbBBaBa1bBa2a2BbB0c2a2a1dBaBBB1gBBBbBBBgBBBBaBd2B1aB0d0b3bBBBBBBbBb2dBBaBBBa",
+    "puzzleID": "14"
+  }
+]

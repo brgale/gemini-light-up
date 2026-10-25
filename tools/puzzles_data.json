@@ -1,0 +1,632 @@
+[
+  {
+    "sizeIdx": 0,
+    "category": "7x7",
+    "difficulty": "easy",
+    "title": "7x7 Easy #919565",
+    "width": 7,
+    "height": 7,
+    "task": "bBaBi2bBb1bBa4bBb4bBiBaBb",
+    "puzzleID": "919565"
+  },
+  {
+    "sizeIdx": 0,
+    "category": "7x7",
+    "difficulty": "easy",
+    "title": "7x7 Easy #5757879",
+    "width": 7,
+    "height": 7,
+    "task": "i3gBa4c3aBc1a3g2i",
+    "puzzleID": "5757879"
+  },
+  {
+    "sizeIdx": 0,
+    "category": "7x7",
+    "difficulty": "easy",
+    "title": "7x7 Easy #2149287",
+    "width": 7,
+    "height": 7,
+    "task": "a0hBb0hBc1h3b1h1a",
+    "puzzleID": "2149287"
+  },
+  {
+    "sizeIdx": 0,
+    "category": "7x7",
+    "difficulty": "easy",
+    "title": "7x7 Easy #7887916",
+    "width": 7,
+    "height": 7,
+    "task": "Bb3bBn2bBb1nBbBb2",
+    "puzzleID": "7887916"
+  },
+  {
+    "sizeIdx": 0,
+    "category": "7x7",
+    "difficulty": "easy",
+    "title": "7x7 Easy #8005735",
+    "width": 7,
+    "height": 7,
+    "task": "a0g1c2eBi2e3c2gBa",
+    "puzzleID": "8005735"
+  },
+  {
+    "sizeIdx": 1,
+    "category": "7x7",
+    "difficulty": "normal",
+    "title": "7x7 Normal #2568107",
+    "width": 7,
+    "height": 7,
+    "task": "B0dBb1c2eBi1e0c1bBd1B",
+    "puzzleID": "2568107"
+  },
+  {
+    "sizeIdx": 1,
+    "category": "7x7",
+    "difficulty": "normal",
+    "title": "7x7 Normal #9680117",
+    "width": 7,
+    "height": 7,
+    "task": "bBe3bB0bBdBg2dBb20b0eBb",
+    "puzzleID": "9680117"
+  },
+  {
+    "sizeIdx": 1,
+    "category": "7x7",
+    "difficulty": "normal",
+    "title": "7x7 Normal #7194004",
+    "width": 7,
+    "height": 7,
+    "task": "d0d00cBd1b1a1aBb1d2c11dBd",
+    "puzzleID": "7194004"
+  },
+  {
+    "sizeIdx": 1,
+    "category": "7x7",
+    "difficulty": "normal",
+    "title": "7x7 Normal #652272",
+    "width": 7,
+    "height": 7,
+    "task": "b2fB3hBBa0c0aB1hB1f1b",
+    "puzzleID": "652272"
+  },
+  {
+    "sizeIdx": 1,
+    "category": "7x7",
+    "difficulty": "normal",
+    "title": "7x7 Normal #2381524",
+    "width": 7,
+    "height": 7,
+    "task": "bBe2c3gBg1g3c3eBb",
+    "puzzleID": "2381524"
+  },
+  {
+    "sizeIdx": 2,
+    "category": "7x7",
+    "difficulty": "hard",
+    "title": "7x7 Hard #3111582",
+    "width": 7,
+    "height": 7,
+    "task": "i2g4a2c3a3c3aBg3i",
+    "puzzleID": "3111582"
+  },
+  {
+    "sizeIdx": 2,
+    "category": "7x7",
+    "difficulty": "hard",
+    "title": "7x7 Hard #4979246",
+    "width": 7,
+    "height": 7,
+    "task": "1eBb1i3i3i0b0eB",
+    "puzzleID": "4979246"
+  },
+  {
+    "sizeIdx": 2,
+    "category": "7x7",
+    "difficulty": "hard",
+    "title": "7x7 Hard #5639526",
+    "width": 7,
+    "height": 7,
+    "task": "e1a1b1e1a2cBcBc2aBe3b1a0e",
+    "puzzleID": "5639526"
+  },
+  {
+    "sizeIdx": 2,
+    "category": "7x7",
+    "difficulty": "hard",
+    "title": "7x7 Hard #9688064",
+    "width": 7,
+    "height": 7,
+    "task": "d2c2c2aBs0a2c1cBd",
+    "puzzleID": "9688064"
+  },
+  {
+    "sizeIdx": 2,
+    "category": "7x7",
+    "difficulty": "hard",
+    "title": "7x7 Hard #1516837",
+    "width": 7,
+    "height": 7,
+    "task": "b0aBf1bB2d0g1dBBb0f0a2b",
+    "puzzleID": "1516837"
+  },
+  {
+    "sizeIdx": 3,
+    "category": "10x10",
+    "difficulty": "easy",
+    "title": "10x10 Easy #1676633",
+    "width": 10,
+    "height": 10,
+    "task": "0c0a1bBaBf2dBa1dBf0dBfB3f1d1fBd0aBdBf0aBbBa2cB",
+    "puzzleID": "1676633"
+  },
+  {
+    "sizeIdx": 3,
+    "category": "10x10",
+    "difficulty": "easy",
+    "title": "10x10 Easy #525339",
+    "width": 10,
+    "height": 10,
+    "task": "a2b2cBaBbBa3c1oBb1b2a1eB2e0a1bBbBoBcBa2bBa1c3b2a",
+    "puzzleID": "525339"
+  },
+  {
+    "sizeIdx": 3,
+    "category": "10x10",
+    "difficulty": "easy",
+    "title": "10x10 Easy #3707816",
+    "width": 10,
+    "height": 10,
+    "task": "Bg1B2mBBBe1iBdBd0d1i0e0B1mBBBg1",
+    "puzzleID": "3707816"
+  },
+  {
+    "sizeIdx": 3,
+    "category": "10x10",
+    "difficulty": "easy",
+    "title": "10x10 Easy #6135254",
+    "width": 10,
+    "height": 10,
+    "task": "a2b1f0cBb01dBh1b0dBeBa32a1eBd1bBh0d1Bb1c0fBb1a",
+    "puzzleID": "6135254"
+  },
+  {
+    "sizeIdx": 3,
+    "category": "10x10",
+    "difficulty": "easy",
+    "title": "10x10 Easy #4731597",
+    "width": 10,
+    "height": 10,
+    "task": "bBBBlBc3a0e0g2aBd1Bc0Bc10dBaBg1eBaBc1lBB2b",
+    "puzzleID": "4731597"
+  },
+  {
+    "sizeIdx": 4,
+    "category": "10x10",
+    "difficulty": "normal",
+    "title": "10x10 Normal #9875553",
+    "width": 10,
+    "height": 10,
+    "task": "gBc2BeBaBd3b0d2bBeBn0e0b1d1b1d2a1eBBc2g",
+    "puzzleID": "9875553"
+  },
+  {
+    "sizeIdx": 4,
+    "category": "10x10",
+    "difficulty": "normal",
+    "title": "10x10 Normal #9267005",
+    "width": 10,
+    "height": 10,
+    "task": "Bg1BBa1dBc0f1f0gBl1g4f2fBcBd1a1BBg0",
+    "puzzleID": "9267005"
+  },
+  {
+    "sizeIdx": 4,
+    "category": "10x10",
+    "difficulty": "normal",
+    "title": "10x10 Normal #9403111",
+    "width": 10,
+    "height": 10,
+    "task": "eBg3a2j2e1b1b3aB1aBl1aBBa3b1b3e2jBa2gBe",
+    "puzzleID": "9403111"
+  },
+  {
+    "sizeIdx": 4,
+    "category": "10x10",
+    "difficulty": "normal",
+    "title": "10x10 Normal #7832653",
+    "width": 10,
+    "height": 10,
+    "task": "bBa1a1d0d0a2j1B1c1g1eB1e2gBcB21jBa0dBdBa2a1b",
+    "puzzleID": "7832653"
+  },
+  {
+    "sizeIdx": 4,
+    "category": "10x10",
+    "difficulty": "normal",
+    "title": "10x10 Normal #9395082",
+    "width": 10,
+    "height": 10,
+    "task": "e1fB1n0d11a1a0a1e1f2e1a2a0aB0dBn2Bf0e",
+    "puzzleID": "9395082"
+  },
+  {
+    "sizeIdx": 5,
+    "category": "10x10",
+    "difficulty": "hard",
+    "title": "10x10 Hard #1349275",
+    "width": 10,
+    "height": 10,
+    "task": "2d1c1e0g1iBb00bBBpB1b22b0i0g0eBcBd1",
+    "puzzleID": "1349275"
+  },
+  {
+    "sizeIdx": 5,
+    "category": "10x10",
+    "difficulty": "hard",
+    "title": "10x10 Hard #9647015",
+    "width": 10,
+    "height": 10,
+    "task": "h2aBa0aBgBa0bB1e1k011b3B0k1eB1b0aBg1a1a2a0h",
+    "puzzleID": "9647015"
+  },
+  {
+    "sizeIdx": 5,
+    "category": "10x10",
+    "difficulty": "hard",
+    "title": "10x10 Hard #1235686",
+    "width": 10,
+    "height": 10,
+    "task": "b0b2b0aBBfBf1c3j1aBn1aBjBc1f0f21a1b0b2b",
+    "puzzleID": "1235686"
+  },
+  {
+    "sizeIdx": 5,
+    "category": "10x10",
+    "difficulty": "hard",
+    "title": "10x10 Hard #8202222",
+    "width": 10,
+    "height": 10,
+    "task": "a2b1a0e2f0hBaBdBg0eBBe3g0d0aBh2f2e1aBb2a",
+    "puzzleID": "8202222"
+  },
+  {
+    "sizeIdx": 5,
+    "category": "10x10",
+    "difficulty": "hard",
+    "title": "10x10 Hard #5155176",
+    "width": 10,
+    "height": 10,
+    "task": "b1a1a3j2cBg1Bd2g0eB1e1g1dB0g2cBj0a0a1b",
+    "puzzleID": "5155176"
+  },
+  {
+    "sizeIdx": 6,
+    "category": "14x14",
+    "difficulty": "easy",
+    "title": "14x14 Easy #5269630",
+    "width": 14,
+    "height": 14,
+    "task": "fBcBB0a02c0Bb1b2aBa2a1bB0b2b1nBd0dBdBc2e0cBe02bB1B1b11e0cBeBc2dBdBdBnBb1b2Bb1aBaBa2bBbB1cBBaBBBc2f",
+    "puzzleID": "5269630"
+  },
+  {
+    "sizeIdx": 6,
+    "category": "14x14",
+    "difficulty": "easy",
+    "title": "14x14 Easy #8479947",
+    "width": 14,
+    "height": 14,
+    "task": "BcBc1dBb1g2hB11bBaBb11oBb1a1cB0e1dBdBa2cBb1d1b3c1aBdBd2e1Bc1a0bBo2BbBa2bBBBh1g2b1d1c2cB",
+    "puzzleID": "8479947"
+  },
+  {
+    "sizeIdx": 6,
+    "category": "14x14",
+    "difficulty": "easy",
+    "title": "14x14 Easy #3748570",
+    "width": 14,
+    "height": 14,
+    "task": "aBr1BaBBbBb3aBa00cBcBa1dBaBd2i0e0b0hBBe0b1Bb01b1eB2h1bBe2iBd1aBdBaBc2c20a2aBb1b2BaBBrBa",
+    "puzzleID": "3748570"
+  },
+  {
+    "sizeIdx": 6,
+    "category": "14x14",
+    "difficulty": "easy",
+    "title": "14x14 Easy #7677219",
+    "width": 14,
+    "height": 14,
+    "task": "BcBbBa00b1fBcBBc2lB1a1BdBBcBb0bB3b0bBeBb4e1cBd2b1bBb0d0cBeBbBe1b1b00b2bBcBBdBBa1Bl0cB2cBf1b1Ba2b1cB",
+    "puzzleID": "7677219"
+  },
+  {
+    "sizeIdx": 6,
+    "category": "14x14",
+    "difficulty": "easy",
+    "title": "14x14 Easy #8287083",
+    "width": 14,
+    "height": 14,
+    "task": "aBc1c0e10c0cBaB1l2bBaBcBb2c2eBaBi0hBcBbB0aBbBbBbBaBBb2c1hBi0aBe2cBbBc1aBb0l00aBc1c0Be1c0c1a",
+    "puzzleID": "8287083"
+  },
+  {
+    "sizeIdx": 7,
+    "category": "14x14",
+    "difficulty": "normal",
+    "title": "14x14 Normal #540790",
+    "width": 14,
+    "height": 14,
+    "task": "a1bBb0d1a1hBc2dBBB1u1c0BdBaBgBa1aBb1a1b2c1aBdBaBc1bBa0bBa0aBg1a0d1Bc2u1BB1dBc1h1aBd3bBb1a",
+    "puzzleID": "540790"
+  },
+  {
+    "sizeIdx": 7,
+    "category": "14x14",
+    "difficulty": "normal",
+    "title": "14x14 Normal #3628129",
+    "width": 14,
+    "height": 14,
+    "task": "iBb0a0b0e01k1fBaB0cBaBa1aBBb1aBaB10e11Br2h1r0B0eB10a0aBbB2aBa1aBcBBa2f2k2BeBbBaBbBi",
+    "puzzleID": "3628129"
+  },
+  {
+    "sizeIdx": 7,
+    "category": "14x14",
+    "difficulty": "normal",
+    "title": "14x14 Normal #5582156",
+    "width": 14,
+    "height": 14,
+    "task": "aB1b1dBg1Be0a1aBaBbBb3cB2d3eBd1iBhBbBaBBe1e1d2e1eB1a1bBhBi1d0eBd20c2b0bBa1a2aBeBBgBd1b20a",
+    "puzzleID": "5582156"
+  },
+  {
+    "sizeIdx": 7,
+    "category": "14x14",
+    "difficulty": "normal",
+    "title": "14x14 Normal #1945835",
+    "width": 14,
+    "height": 14,
+    "task": "oBBb211aBaBBb2dB1dBeBjBcBb0aBg2d2b0bBBhBBbBBhB2bBb2dBg1a1b0cBjBe2dBBdBbBBaBaBB2bB1o",
+    "puzzleID": "1945835"
+  },
+  {
+    "sizeIdx": 7,
+    "category": "14x14",
+    "difficulty": "normal",
+    "title": "14x14 Normal #5039333",
+    "width": 14,
+    "height": 14,
+    "task": "a0BeBb1cBc3bBa1aBBBl1aBb2b0l0cBcB2c2b1c0d1eBhBeBd0c1bBc21c1c2lBbBbBa0l1B0aBa2b2c0cBbBeBBa",
+    "puzzleID": "5039333"
+  },
+  {
+    "sizeIdx": 8,
+    "category": "14x14",
+    "difficulty": "hard",
+    "title": "14x14 Hard #6788757",
+    "width": 14,
+    "height": 14,
+    "task": "c1bBd1eBb0gBa3aBaBBa0a1fBc1c1BbBc1cBBe3bBiBe2Ba11B1BBa2Be1iBb0eBBc2cBb1BcBcBf2a0aBBa1a3aBgBbBe0dBbBc",
+    "puzzleID": "6788757"
+  },
+  {
+    "sizeIdx": 8,
+    "category": "14x14",
+    "difficulty": "hard",
+    "title": "14x14 Hard #5256011",
+    "width": 14,
+    "height": 14,
+    "task": "b1b1b1b1Ba1gBe1d1aBeBc0bBaBa0iB2fB0aBcBc3aBbBaB0cBBf3BcBBaBb0a2cBcBa02f11iBa3aBb0c0eBa2d1eBgBaB0bBb1bBb",
+    "puzzleID": "5256011"
+  },
+  {
+    "sizeIdx": 8,
+    "category": "14x14",
+    "difficulty": "hard",
+    "title": "14x14 Hard #3178956",
+    "width": 14,
+    "height": 14,
+    "task": "c21aBaBfBBf3bBhBb2a0c2b2gBaBeBe11f3b0eBaBBg2Bg00aBeBb0fB2eBe1aBg1b2cBa2bBh3bBf21fBaBa0Bc",
+    "puzzleID": "3178956"
+  },
+  {
+    "sizeIdx": 8,
+    "category": "14x14",
+    "difficulty": "hard",
+    "title": "14x14 Hard #2818735",
+    "width": 14,
+    "height": 14,
+    "task": "aBa1bBBBc3aBbBgBa3a0c1n0e1Bn1dBaBBb1bBdBd1b0Bb2dBdBbBbB3a2dBnB1eBnBc2a1aBg0b3aBcBB2bBa2a",
+    "puzzleID": "2818735"
+  },
+  {
+    "sizeIdx": 8,
+    "category": "14x14",
+    "difficulty": "hard",
+    "title": "14x14 Hard #2611327",
+    "width": 14,
+    "height": 14,
+    "task": "e1a2b0dBa0h2d2e0dBc2d2a3Bc0BaBdBiBBaBc22d1bBjBb3dB2cBa0Bi2d1aBBc01a1dBcBdBe2d0hBa3d1b1aBe",
+    "puzzleID": "2611327"
+  },
+  {
+    "sizeIdx": 9,
+    "category": "25x25",
+    "difficulty": "easy",
+    "title": "25x25 Easy #6587127",
+    "width": 25,
+    "height": 25,
+    "task": "Be00i2BbBBa2cB1gBBbBb2e1eBB00gBb1dBcB2bBbBBb2gBc0aBaB0b1aBbBaBbBBaBb1jBh1cBe0e2d00a0a1aB1a1aBaBBa0gBbBa1aBaBfBBdBa0dB0e1Bf2d2BdBj2aBBBaBe1eBjBaBBeBd2aBB1BcB2aBBc3BB1a1d2eBBaBjBe2e0a0BBa2jBdB1d1fB1eBBd0aBdBBf2a1a0a1b1gBaBBa2a0aBBaBa1aB0d0e2eBcBhBj2bBaB0b0aBbBa1bBBaBa0cBg0bB0bBbBBc1d0b1gB00BeBe1bBb20g01c2aBBbB1iB0eB",
+    "puzzleID": "6587127"
+  },
+  {
+    "sizeIdx": 9,
+    "category": "25x25",
+    "difficulty": "easy",
+    "title": "25x25 Easy #1464025",
+    "width": 25,
+    "height": 25,
+    "task": "aBBd0f0BfBf0BBBa1gBa2aB2aB2Bb3aBaBc2BaBh1a1dBaB1bBaBdBiBh2a1dBaBBb1aBa2dB1d1aB0cBf1e0dBdB0BbBiBaB1aBfBBe100a0Bj02bBa1aBe1e0dBa2aBbBcBdBbBBbBg3a2b2cBa4cB1BgBBf3aBa4f21gBBBc3aBcBbBaBg0bBBbBdBcBb0a3a1dBeBe1aBa1bB1jB0a11BeBBf1aB1a1iBbBB0dBdBeBf2c00a0dB0d2a1a2bB1a1dBaBhBiBd4a2b01aBdBaBhBaB1cBaBa3bBB2aBBaBaBg2aBBBBf1fBBf1dBBa",
+    "puzzleID": "1464025"
+  },
+  {
+    "sizeIdx": 9,
+    "category": "25x25",
+    "difficulty": "easy",
+    "title": "25x25 Easy #8591837",
+    "width": 25,
+    "height": 25,
+    "task": "BBa3aBhB2a2b11bBb2a20a1eBBcBeBeBeB2bBcBc2a0cBb0b2Bd2Ba1dBBcBe1bBfBBaBc1Ba1bBBbBbBcBb2BBa1d0bB101cBa0fBb0dBfBe0aBdBbBcB2e1aBeBaBb1a0a1BbBB1bB1eB0gBbB0aBBa1aBBd1b0dBBBBBbBaBbB1dBb12cBBBBBcB1bBd0BbBaBbBBB12d0bBdBBaBaB2aBBbBgBBe1BbBB0bBBaBa2bBa0eBaBeB2cBb1dBa2e2fBdBbBfBa3cBBB1b2d0a2BBbBc3b2bBBbBa2BcBa10fBbBeBcBBdBa30dB0b2bBcBa1cBc1bBBeBeBe1cB2e0aBBa2bBb1BbBaBBhBaBa1B",
+    "puzzleID": "8591837"
+  },
+  {
+    "sizeIdx": 9,
+    "category": "25x25",
+    "difficulty": "easy",
+    "title": "25x25 Easy #6102988",
+    "width": 25,
+    "height": 25,
+    "task": "0cBb1BhBfBaB0aBbBBBBBB3bBBBaBa10b00b2cBaBBcBc2aB0iBcBfBfBBa0cBaBa0aBdBBbBBcBBBaBcBc3a1aBb2c2eBqBBc2eBBBBBb00c0Ba1Bf1BiB0aBBeBaBaBbBaBBBeBBe0bBa0aBdBc4bBbBeBcBaB2bBaBbBBbBB1BbBaBbBbBa0b2B1BbB1bBaBbBBaBc0e1b1b1c3d2aBa0b1eB1eBBBaBb0a1a1e1BaBBi1BfBBaBBcBBb0BBBBeBcBBqBeBc0bBa1a0cBcBa2BBc2BbBBdBa2a1a1c1aB0f2fBcBiBBaBcBcB2aBc1bB1bBBa1aBB1bBB1BBB2b1a1BaBfBhBBbBcB",
+    "puzzleID": "6102988"
+  },
+  {
+    "sizeIdx": 9,
+    "category": "25x25",
+    "difficulty": "easy",
+    "title": "25x25 Easy #1765671",
+    "width": 25,
+    "height": 25,
+    "task": "e3aBB1c1BdBc1a0BhBf2BdBfBBB2aBaBc1cB3e0aB0aBaBfBj1a0b0b2bBcB1a0BcBh2a0b1aBd0BaBa2bBbBg0aBd1c1bBa2bBbBe1aBBBaBbBBa4e1B1h2aBfBjBa3aBbBBd1eBBgBa10aBc1cBeBa2b1gBd0Ba2cBaBBd0g2bBaBeBc1cBa10a2g20eBd1Bb1a1a2j1fBa0hBB1eBaB1bBaBBBaBeBb1bBaBb0c0d2a1gBb1b0aBaB1d2aBb0aBhBcB1a01c2bBbBb1a2j2fBa0a1BaBe0Bc0c0aBaBBB2fBdBBf0h00a2c1d0BcBBBaBe",
+    "puzzleID": "1765671"
+  },
+  {
+    "sizeIdx": 10,
+    "category": "25x25",
+    "difficulty": "normal",
+    "title": "25x25 Normal #2895335",
+    "width": 25,
+    "height": 25,
+    "task": "B1c0c1Ba2c2eBaBbBBcBBaBaBBaBhBBpBb2b0j1fBfBc1b11aBcBa1aBBl1b1bBeBaB1c0fBa0d1BBbBaBfBaB2aBb0fBe1a2b1Be0cB2b01BbBb3d1aBBcB0BeBb1dBa0aBBa10cB0eB0aBdBb0dBd0eB1b2eBcBeBbBBe1dBd2bBd3aBBe00c2BaBBa1a1dBb0eBBBcBBaBdBb3bBB2bBBcBeBBbBaBeBf2b2aBBa2f3a1bBBBdBa3f1cB1aBe0bBb2lBBa2a2c0aB1bBcBf1fBj1b1b1p2Bh1aB1aBaB0c1Bb1aBe1cBaB1cBcBB",
+    "puzzleID": "2895335"
+  },
+  {
+    "sizeIdx": 10,
+    "category": "25x25",
+    "difficulty": "normal",
+    "title": "25x25 Normal #8712653",
+    "width": 25,
+    "height": 25,
+    "task": "c1fBaB1bBBc1d2c0b3c0i03b0BBBg1a3b1c1Bb1a1bBe1f2BbBa1fBBa0BBBBeBbBeBBBbBBbB0a0cBa1aBd0g2eBb1dBaBc2mBdBh12dBcBcBf2bBBaBcBBbB1fBh1aBbBcBc20c00d0cBBbBaBBcB0BaBBfBf2BaBBBc0Ba0b21c0d0BcBBcBcBbBa0h2f1BbBBc1a11b1f1cBc1dBBh0d0mBc2a0dBb1eBgBd1aBaBc2a00bB1bB2BeBbBeB1BBBaB1f2aBbBBf1eBbBa0bB3cBb2aBg1BBBb02i1c1b1c3dBc1BbBBaBf0c",
+    "puzzleID": "8712653"
+  },
+  {
+    "sizeIdx": 10,
+    "category": "25x25",
+    "difficulty": "normal",
+    "title": "25x25 Normal #1484312",
+    "width": 25,
+    "height": 25,
+    "task": "BaBaBdB2c1bBd1aBc2B0hBBf1b1BdBd1b1b2bBBbBbBB2aBa2dBb1a1BaBa2c2hB2hBaBBc2c2b1eBf2dBcBBd1a1aBc0BbBaBc2bBcBd12hBaBd2bBdBb1d0d0g0b2fB1BBfBBB1a1aBb0d1cBb10Be0e1aBfBe1c1e0f3aBeBe1B0b0cBd2bBa2aBBB1fBBBBf2b0g0d3d0b1d1bBdBaBh2Bd1cBbBcBaBbBBc0aBaBd01cBd0fBe3bBc3cBBaBhB1hBcBa0a02a3b0d1a1aB2BbBbBBbBbBbBdBdB2b0f1Bh0BBcBa1d1b2cB0dBaBaB",
+    "puzzleID": "1484312"
+  },
+  {
+    "sizeIdx": 10,
+    "category": "25x25",
+    "difficulty": "normal",
+    "title": "25x25 Normal #5309334",
+    "width": 25,
+    "height": 25,
+    "task": "BaBbBaBBBc1BbBf1a1b20a0aBaBBaBb1BBb22b1gBiBdBe2a2c0b0c2aBg1fBBb1d2c2bBBaB2cBa1c0c2aBaBBaBa2d1aB1c0Bh0BgBbBBg0aBBf0cB1bBcBeBeBBcBBe1aBb11BB1aB3c3aBBa00BBaBaBd1fBbBBaBBBBaB2BBaBbBeBiBe1bBa1BBBaBBB1aB2bBfBdBa2a1BBBaBBa1cB1a1BBB2bBaBeBBcB0eBeBcBbBBcBfBBa0gBBb3g00hBBcBBaBdBaBa1Ba1a0c0cBaBcB2aB2bBc1dBb1BfBg2a2c0bBcBa3eBdBi0gBbB0bB00b0aB3aBaBaB0bBa1fBbBBcBB1aBbBaB",
+    "puzzleID": "5309334"
+  },
+  {
+    "sizeIdx": 10,
+    "category": "25x25",
+    "difficulty": "normal",
+    "title": "25x25 Normal #3591278",
+    "width": 25,
+    "height": 25,
+    "task": "e0d01g1aBd2k0a1a1cBa3g2d0BfBeBBd0a1b1eBk0aB10eB0cB0dBa2a1cBB0bB1Bb2eBeBiBdBBBc0a1c1BBa1BaBBB1bBk0aBa1bBbBa1B1dBbBBBBh11aBiBBaB1a1cBdBd1a3c0fBcBBc2BaBbBdBc1aBc1dBbBa0Bc11c2fBc4aBd1dBc1a0BaBBi1aBBhBB1BbBd0BBaBb0bBa2aBkBbBBB0aBBaB1BcBaBc0B2dBiBe2eBbBB0b10BcBa0a1dB1c1BeB12aBk0eBbBaBdBBeBfB1d1g1a0c2a1aBk2dBa2gB0d1e",
+    "puzzleID": "3591278"
+  },
+  {
+    "sizeIdx": 11,
+    "category": "25x25",
+    "difficulty": "hard",
+    "title": "25x25 Hard #9011172",
+    "width": 25,
+    "height": 25,
+    "task": "a2d0BBd3cBBaBa2c1b1dBBeBcBbB1BaB1iBb3aBa2aBg1b0kBaBb0B1BaBBbBdBb1BdBfBBaBa1gBBBBcBa1aBB1aBf1bBBBcB2cBgB0jBaB1g0a1eB2aBbBf2bBaBb2BdBb2e1d2bBc0b1cBaBa0dBgBpBBaBcBaBBpBgBd0a1a1cBbBcBb0d2eBbBd2Bb0a2bBf2bBa3BeBaBgB3aBjBBgBcBBcBB1bBfBa1BBa0aBc2BBBg2aBaBBf2dB0b0dBbB1aBBBBbBaBk3bBgBaBa3a1bBiB3aB1BbBc1eB2d0b2cBaBaBBcBdBB0dBa",
+    "puzzleID": "9011172"
+  },
+  {
+    "sizeIdx": 11,
+    "category": "25x25",
+    "difficulty": "hard",
+    "title": "25x25 Hard #9599807",
+    "width": 25,
+    "height": 25,
+    "task": "1aBaBcBBd1aBcB0bBdBBa1aBBjBeBaBaBBBBBb3bBb01a1aBB0eBb2a2BBa1b0e1aBe1bBjBBBb00b2c1B2bB0f0g0dBcBbBBbBiBeBa2a2cBBBaBa00aBb1a2bBb3c2aBaBeB0Bc2aBhBBBBbBhBBbBb2aB00cB1c1BBBd2bBBBg2a1dBa4aBdBa0gBBBb1dBBB1c0BcBBBa2bBbBBhBbB0BBh1aBcBB1eBaBa2c0bBb1aBb0a1BaBaBBBcBaBaBe3i3bBBb2c1dBg3fBBbBB1cBb01bBB1jBbBeBaBe1bBaBBBa3bBeBB0aBaB0b0b2bBBBB2a0a0e1jBBa3aB1dBbB1c1a0dBBcBaBaB",
+    "puzzleID": "9599807"
+  },
+  {
+    "sizeIdx": 11,
+    "category": "25x25",
+    "difficulty": "hard",
+    "title": "25x25 Hard #3385695",
+    "width": 25,
+    "height": 25,
+    "task": "fBgBaBaB0gBf0a2a10cBaBa1c20aBBBa0BaBc1dBa01fBiBj10a1a0bBjBa2bBjB0a2BBdBBbB1eBaBj1a1a0jBaB0aBb0fBdBd1Bb1gBd20a1aBbBaBe1a0aB1aB2cBb2aBB0aBBBBh1eBfBa2b1b02f1aBaBBc0BaBaBfBBb2bBaBfBeBhBB2BaBB1aBbBc1BaB0a1aBeBaBb2a1a0BdBgBb2BdBd1f0bBaBBaBjBa2aBj1aBe01bB2dB1Ba0BjBb2a2jBb1aBaB0j0i2f21aBd2c1a00aBB3aB0c1aBa0cBBa1aBf0gB0aBaBg1f",
+    "puzzleID": "3385695"
+  },
+  {
+    "sizeIdx": 11,
+    "category": "25x25",
+    "difficulty": "hard",
+    "title": "25x25 Hard #3463063",
+    "width": 25,
+    "height": 25,
+    "task": "aBBBcBc1cBaBaBrB2d2d0c1Bb0gB0bB2cBd1hBb0b2bBa1b1e2bBiB1b2BB0b1a0bBd1n0c1b1dBBeBjBj2aBb1Ba0d0b10dBBd2a2i100kBf00f0a2g0a0bBa00b1dBaB0c1i0a2a2aBi1c0BaBd3bBBa1b0aBg2a1fBBf2kBB1i2aBd11d0Bb0d2a1BbBa1jBjBe1Bd0b2cBn2dBbBa2b0BB1b1Bi2bBeBb1a2b0b0b1h1dBcBBbBBg1bB1c0dBd12r1a1aBcBcBcBB1a",
+    "puzzleID": "3463063"
+  },
+  {
+    "sizeIdx": 11,
+    "category": "25x25",
+    "difficulty": "hard",
+    "title": "25x25 Hard #4953739",
+    "width": 25,
+    "height": 25,
+    "task": "Bc2aBB1e0c2aBcBcBgB2b1dBa3cBaBaBa1bBd0a0zcBBaB0i0a1a1cBdBd2aBhBB1d0b1f1cBaBb1bBd2bBb0aB1bBbBaBBBc0aBeBBBdBBa4aBfBaB1aB0b1aBaBBk0fBc3aBaBfBf1aBa1BBBaB2bBBa0b1b1fBBeBBf1b0bBa0BbBBaBBBBa3a2fBf2aBaBcBfBkBBaBa4bBBa1BaBfBaBaBBdBBBe0a2c1BBaBb2bBBaBbBb1d0bBbBaBcBf0bBdB12hBa3dBd1cBaBaBi0BaB2zc0aBdBb1a1aBaBcBaBdBbB2gBc0cBaBc1eBB2aBc2",
+    "puzzleID": "4953739"
+  },
+  {
+    "sizeIdx": 12,
+    "category": "special",
+    "difficulty": "weekly",
+    "title": "Special Weekly #12-1",
+    "width": 25,
+    "height": 25,
+    "task": "aBb2BcBaBfBaBcBBb2aBBBb1a1b1bBb2b3b0a0bBBBa2BBbBaBaBhBaBa1bBBBcBBBeBa1dBaBeB11bBe1a1b1fBb0aBeBB1fBBd11dBBf2BbBBb0bB0h1Bb1b0BbB0eBaBBa3aBBa0aBBaBeBB1f0e2bBe2fBb11a1eBBd2Be0aB0fBa0aBd1bBdBaBa1hBaBa2l1aBaBe0aBcBfB1fBcBaBbBa03bBb2aBaB0a1aBbBbBBaBcBBaBaBBc0BBBB1cBBa4aB2cBaBBeBcBBcBeBBaBf02aB0bBaB0aBbBBaB1f1a1bBcBBBdBBBcBbBa2bBaBeBj1eBaBaBBaBa2bBb1a0b2aBbBb0aBaBBBBaBa1bBbBaBb0a0b3bBaBaBBaBaBe0jBeBaBb1a1bBcB00dBB2cBb1aBfBBaB2b0aBBa1bBBaB1fBa0BeBcBBcBeB0aBcBBa1aBBcBBBBBBcB1aBaB1cBaBBbBbBa2aBBa3aBbBbB1aBbBa3c1fBBfBcBa1eBaBaBl0aBa1h1a2a1dBb1d2aBaBf11aBeB0dB1e0aB0bBf0eBb1eBfBB0e0aB1aBaB1a2aB1a2eBBbB0bBbB0hBBb2b1BbBBfB1d01dBBf2BBe3aBbBfBbBaBeBb2B1eBa0d1a3eB1BcBBBbBaBa1hBaBaBbBB2aBBBb1aBbBbBb0bBb1a2bBBBa1bBBc1aBfBaBcBBb1a",
+    "puzzleID": "12-1"
+  },
+  {
+    "sizeIdx": 13,
+    "category": "special",
+    "difficulty": "daily",
+    "title": "Special Daily #13-1",
+    "width": 30,
+    "height": 30,
+    "task": "bBa2aB1a1Bb1h0bBBaBaBcBcBdBbBcBk3k2a2b2dBb2a2Bb3cBb2BBBaBB2bBa1BbBcBdBBb1e0eBBeBBbBbBb0h1eB12gBaBb0a1cBBbBa2dBc01bB1bBd3b1bBbBBc1bBdBbBbBbBbBc4b1BcBbBa1b2aBeBjBcBbBl0Ba0b2aBb1bBfB0bB1f0gBf1a1gB0BfBcBd01Bd1aBdBa0cBdBa3Bc0BaBBbBa1Bc2bBb3c3dBcBbBbBcBBaBbBBaBBcB1a0d1cBa3d1aBdB10d0c2f1BBg2a1fBgBfB0b11f1bBb1a0bBaBBl3b1c1j1eBaBbBa2b2cB1b1c0b2b2bBb2d1bBcBBb2bBb1dBbB1bBBc1d1aBbB0c1aBbBa1g110eBh0b1bBbB0eB3eBeBbB0d1cBbB2aBbBBBa2BB1b1c2bBBaBb1d0b1a2kBk1cBbBdBcBc3aBa2Bb0h1bB2aBBa1aBb",
+    "puzzleID": "13-1"
+  },
+  {
+    "sizeIdx": 14,
+    "category": "special",
+    "difficulty": "monthly",
+    "title": "Special Monthly #14-1",
+    "width": 30,
+    "height": 30,
+    "task": "a0B1aB0d1b1bBBB0BBbBb1dBBaBBBdBaBBB1gBB0bBB2gBB1Ba1dBa2aBc2BbB2aBaBb0aBaB1bBBcBaBa1aBcBc2bBcBBfBBc0bBc3cBdB0eBBBbBbBBbBbBBBeBBgBBbBBdBB11aBBB0a0BB0d0Bb1Bd0B1h0fBBfBh0B1aBgBeBaBBd02aBeBg1a1B1bBaBBa1Bb1aB0bBBaBb1BaBBaBbBBBcBa21a2a2Ba1bBc0BcBbBa1Ba2aB0aBcBcBaBb2cBa2BdB1aBc2bBa1c4eBBBcBBb1dBBdBb3BcB1Bd01BaBbBBa0b2dBbBd2bBaBBbBaBBBBcBBbBaBBcBBaBb1a0BcBBaBbBBcBa2aBBB2dBc0bBbBbBcBd1B1Ba3aBhBaBBBlBBBaBhBB0bBc2bBaBbBa0bBaBbBaBbBcBbBBBBaBc0BBbBaBBBfBB1aBbBB0cBaBBBaBa4bBbB2BaBBa2dBaBBaBB3b0bBaBaBa1BbBBBa2c0BaBaBbBa1aBBcBaBB0b1BbBaBaBaBaBBrBBa0a1aBaBaBaBBa2cBBc1b21bBBbBcB1c1aB1a2b1BdBb0b2aBaBbBa3a1bBbBdBBd1cBhBbBBBBbBhBcBbB1bBBBbBa1b1b0aBBaBbBb0aBbBBBbBB1BbBBBbBa0bBbBaBBaBb0bBa3bBBBbBBbBcBhBb1B02bBhBc2dB0d3bBbBa1aBbBa2aBbBbBd0BbBaBBaBcB1cBbBBb0Bb1cBBc0aBBaBa1a2aBa1aBBrBBa2a1aBa2bBBbBBBa1cBBaBaBb1aBaBBc2aBB1bBBaBaBa3b1bBB1aBBa3d3aBBaBB1b0bBaBaBBBa4cBBBbBaBBBfBB1aBbBBBcBaBBB0bBc1b2aBbBaBb0a1bBaBbBc1bBBBhBaBBBlB2Ba0hBaBaBBB2d0cBb1b0b0cBdBB1BaBaBcB2bBaBBc11a1bBa1BcBBa0bBBcBB20aBbBBaBb0dBbBdBbBa2Bb1a0BBd1BBcBBb0d11d0bBBcBBBe1cBaBb1c1aBBd1Ba2cBbBa2c1cBaB2a3aBBa2bBcB0cBbBaBBaBaBBaBcBBBbBaB2aBBbBaBBbBBaBb02a0BaBb11Ba0gBeBaB2dB3aBeBg2a1B2hBfBBfBhBB1dBBbBBdBBBBaBBBBaBBBBd10bB0gBBe1B0bBbB2bBb2B1eBBdBcBc3b0cBBfBBcBbBc3cBaBa0aBcBBbBBaBa1bBa2a2BbB0c2a2a1dBaBBB1gBBBbBBBgBBBBaBd2B1aB0d0b3bBBBBBBbBb2dBBaBBBa",
+    "puzzleID": "14-1"
+  }
+]

@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini Light Up - Offline</title>
+  <meta name="description" content="Play Gemini Light Up (Akari) puzzle game completely offline.">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <!-- iOS PWA full-screen support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Gemini Light Up">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar / Drawer -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="#" class="brand" onclick="location.reload(); return false;">
+          <svg class="brand-icon" viewBox="0 0 24 24">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zm-2 17h4v1h-4v-1zm1 2h2v1h-2v-1z"/>
+          </svg>
+          <span>Gemini Light Up</span>
+        </a>
+      </div>
+
+      <div class="sidebar-content">
+        <div class="nav-section-title">Standard Puzzles</div>
+        <ul class="nav-list">
+          <li class="nav-item active" data-cat="7x7" data-diff="easy">
+            <span>7x7 Easy</span>
+            <span class="badge">Official</span>
+          </li>
+          <li class="nav-item" data-cat="7x7" data-diff="normal">
+            <span>7x7 Normal</span>
+          </li>
+          <li class="nav-item" data-cat="7x7" data-diff="hard">
+            <span>7x7 Hard</span>
+          </li>
+
+          <li class="nav-item" data-cat="10x10" data-diff="easy">
+            <span>10x10 Easy</span>
+          </li>
+          <li class="nav-item" data-cat="10x10" data-diff="normal">
+            <span>10x10 Normal</span>
+          </li>
+          <li class="nav-item" data-cat="10x10" data-diff="hard">
+            <span>10x10 Hard</span>
+          </li>
+
+          <li class="nav-item" data-cat="14x14" data-diff="easy">
+            <span>14x14 Easy</span>
+          </li>
+          <li class="nav-item" data-cat="14x14" data-diff="normal">
+            <span>14x14 Normal</span>
+          </li>
+          <li class="nav-item" data-cat="14x14" data-diff="hard">
+            <span>14x14 Hard</span>
+          </li>
+
+          <li class="nav-item" data-cat="25x25" data-diff="easy">
+            <span>25x25 Easy</span>
+          </li>
+          <li class="nav-item" data-cat="25x25" data-diff="normal">
+            <span>25x25 Normal</span>
+          </li>
+          <li class="nav-item" data-cat="25x25" data-diff="hard">
+            <span>25x25 Hard</span>
+          </li>
+        </ul>
+
+        <div class="nav-section-title">Special & Daily</div>
+        <ul class="nav-list">
+          <li class="nav-item" data-cat="daily">
+            <span>Today's Daily Challenge</span>
+            <span class="badge">Daily</span>
+          </li>
+          <li class="nav-item" data-cat="special" data-diff="weekly">
+            <span>Special Weekly (25x25)</span>
+          </li>
+          <li class="nav-item" data-cat="special" data-diff="monthly">
+            <span>Special Monthly (30x30)</span>
+          </li>
+        </ul>
+
+        <div class="nav-section-title">Tools & Custom</div>
+        <ul class="nav-list">
+          <li class="nav-item" id="btnCustomPuzzle">
+            <span>Custom Generator...</span>
+          </li>
+          <li class="nav-item" id="btnImportExport">
+            <span>Import / Export Task...</span>
+          </li>
+          <li class="nav-item" id="btnRules">
+            <span>How to Play (Rules)</span>
+          </li>
+        </ul>
+
+        <div class="site-version-badge">Version 1.5</div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-wrapper">
+      <!-- Top Bar -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="icon-btn" id="btnSidebarToggle" title="Toggle Sidebar">
+            <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+          </button>
+          
+          <div class="timer-container" id="timerBox">
+            <span id="timerDisplay">00:00</span>
+            <button class="timer-btn" id="btnPause" title="Pause Timer">
+              <svg style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            </button>
+            <button class="timer-btn" id="btnResume" title="Resume Timer" style="display:none;">
+              <svg style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="header-center">
+          <!-- Tools: Bulb, Cross, Cycle, Erase -->
+          <div class="tool-group">
+            <button class="tool-btn" data-tool="bulb" title="Place Light Bulb [1]">
+              <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zm-2 17h4v1h-4v-1zm1 2h2v1h-2v-1z"/></svg>
+              <span>Bulb</span>
+            </button>
+            <button class="tool-btn" data-tool="cross" title="Mark X [2]">
+              <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              <span>Cross (X)</span>
+            </button>
+            <button class="tool-btn active" data-tool="cycle" title="Cycle Mode [3]">
+              <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+              <span>Cycle</span>
+            </button>
+            <button class="tool-btn" data-tool="erase" title="Eraser [4]">
+              <svg viewBox="0 0 24 24"><path d="M15.14 3c-.4 0-.8.15-1.11.46l-8.6 8.6c-.61.61-.61 1.61 0 2.22l5.88 5.88c.3.3.71.46 1.12.46h5.57c.55 0 1-.45 1-1s-.45-1-1-1h-4.74l3.19-3.19c.61-.61.61-1.61 0-2.22L16.25 3.46c-.31-.31-.71-.46-1.11-.46zm.01 2.83l3.54 3.54-2.83 2.83-3.54-3.54 2.83-2.83z"/></svg>
+              <span>Erase</span>
+            </button>
+          </div>
+
+          <!-- Undo / Redo -->
+          <button class="icon-btn" id="btnUndo" title="Undo [Ctrl+Z]">
+            <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+          </button>
+          <button class="icon-btn" id="btnRedo" title="Redo [Ctrl+Y]">
+            <svg viewBox="0 0 24 24"><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>
+          </button>
+        </div>
+
+        <div class="header-right">
+          <!-- Zoom Controls -->
+          <div class="zoom-control-container">
+            <div class="zoom-slider-row">
+              <input type="range" id="zoomSlider" min="0.5" max="2.0" step="0.05" value="1.0" title="Zoom">
+              <button class="icon-btn" id="btnZoomFit" title="Fit Board (100%)">
+                <svg viewBox="0 0 24 24"><path d="M5 15H3v4c0 1.1.9 2 2 2h4v-2H5v-4zM5 5h4V3H5c-1.1 0-2 .9-2 2v4h2V5zm14-2h-4v2h4v4h2V5c0-1.1-.9-2-2-2zm0 16h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4z"/></svg>
+              </button>
+            </div>
+            <div class="zoom-level-label" id="zoomLevelLabel">100%</div>
+          </div>
+
+          <button class="icon-btn" id="btnSettings" title="Settings">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Checkpoint Bar -->
+      <div class="checkpoint-bar">
+        <button class="btn" id="btnSaveCheckpoint" style="padding:3px 10px; font-size:0.78rem;">
+          <svg style="width:14px;height:14px;" viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+          Save Checkpoint [Ctrl+S]
+        </button>
+        <span style="margin: 0 4px;">|</span>
+        <div id="checkpointsList" style="display:flex;gap:6px;"></div>
+      </div>
+
+      <!-- Hint Toast Banner -->
+      <div class="hint-toast" id="hintToast">
+        <svg class="hint-toast-icon" viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+        <div class="hint-toast-content" id="hintMessage">Hint message</div>
+        <button class="hint-toast-close" id="btnHintClose">&times;</button>
+      </div>
+
+      <!-- Game Board Container -->
+      <div class="board-container">
+        <!-- Pause Overlay -->
+        <div class="pause-overlay" id="pauseOverlay">
+          <h2>Game Paused</h2>
+          <button class="btn btn-primary" onclick="window.app.togglePause(false)">Resume</button>
+        </div>
+
+        <div class="board-viewport" id="boardViewport">
+          <div class="board-title-info">
+            <span id="puzzleTitle">7x7 Easy</span>
+            <span>•</span>
+            <span>Puzzle ID: <strong id="puzzleId">12345</strong></span>
+          </div>
+
+          <div class="puzzle-board" id="puzzleBoard"></div>
+          <div class="print-footer">Printed from Light Up Offline (Akari)</div>
+        </div>
+      </div>
+
+      <!-- Bottom Action Bar -->
+      <footer class="bottom-bar">
+        <div class="action-btn-group">
+          <button class="btn btn-accent" id="btnCheckDone" title="Check Solution [Enter]">
+            <svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+            Done
+          </button>
+          <button class="btn" id="btnHint" title="Get Hint [H]">
+            <svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+            Hint
+          </button>
+          <button class="btn" id="btnStartOver">Start Over</button>
+          <button class="btn" id="btnNewPuzzle">New Puzzle</button>
+        </div>
+
+        <div class="action-btn-group">
+          <button class="btn" id="btnPrint">Print...</button>
+          <button class="btn" id="btnShare">Share</button>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Modals -->
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Settings</h3>
+        <button class="icon-btn" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-list">
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Night Mode (Dark Theme)</div>
+              <div class="setting-desc">Switch between light and dark visual themes</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="settingNightMode">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Blue Light</div>
+              <div class="setting-desc">Use cool cyan beams instead of warm sunlight</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="settingBlueLight">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Auto-cross completed numbers</div>
+              <div class="setting-desc">Automatically mark X around satisfied numbers</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="settingAutoCross">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Gray out completed numbers</div>
+              <div class="setting-desc">Dim clues when correct amount of bulbs are placed</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="settingGrayCompleted">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Highlight wrong numbers</div>
+              <div class="setting-desc">Show red alert on numbers with too many bulbs</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="settingMarkErrors">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Show board coordinates</div>
+              <div class="setting-desc">Display A-Z columns and 1-N rows</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="settingShowCoords">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Sound Effects</div>
+              <div class="setting-desc">Web Audio clicks, chimes, and fanfare</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="settingSound" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Hide timer</div>
+              <div class="setting-desc">Play without time pressure</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="settingHideTimer">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Highlight last change</div>
+              <div class="setting-desc">Show subtle dashed ring on latest cell</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="settingHighlightChange">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" data-close-modal>Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rules Modal -->
+  <div class="modal-overlay" id="rulesModal">
+    <div class="modal-card" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">How to Play Light Up (Akari)</h3>
+        <button class="icon-btn" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body" style="line-height: 1.6; font-size: 0.95rem;">
+        <p><strong>Light Up (Akari)</strong> is a Japanese logic puzzle with simple rules and rich depth:</p>
+        <br>
+        <ul style="padding-left: 20px; display:flex; flex-direction:column; gap:10px;">
+          <li><strong>Goal:</strong> Place light bulbs on the grid so that <strong>every white square is illuminated</strong>.</li>
+          <li><strong>Illumination:</strong> A bulb casts light horizontally and vertically until blocked by a black square or the grid edge.</li>
+          <li><strong>No Bulb Clashes:</strong> No light bulb may shine directly onto another light bulb (no two bulbs can see each other along a straight row or column without a black square between them).</li>
+          <li><strong>Numbered Black Cells:</strong> A number in a black square (0, 1, 2, 3, or 4) indicates <strong>exactly how many bulbs</strong> touch its four orthogonal edges (up, down, left, right).</li>
+          <li><strong>Unnumbered Black Cells:</strong> Can have any number of adjacent bulbs (or none).</li>
+        </ul>
+        <br>
+        <div style="background:var(--bg-primary); padding:12px; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+          <strong>Controls:</strong>
+          <ul style="padding-left: 20px; margin-top: 6px;">
+            <li><strong>Left Click:</strong> Place / remove light bulb (or use selected tool).</li>
+            <li><strong>Right Click:</strong> Place / remove cross (X) to mark squares where bulbs cannot go.</li>
+            <li><strong>Click & Drag:</strong> Quickly mark crosses or erase across multiple cells.</li>
+            <li><strong>Shortcuts:</strong> <code>Space</code> / <code>B</code> = Bulb, <code>X</code> = Cross, <code>Z</code> = Undo, <code>Y</code> = Redo, <code>H</code> = Hint.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" data-close-modal>Got it!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Puzzle Generator Modal -->
+  <div class="modal-overlay" id="customModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Custom Puzzle Generator</h3>
+        <button class="icon-btn" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div>
+            <label style="font-weight:600; display:block; margin-bottom:6px;">Grid Width:</label>
+            <input type="number" id="customWidth" value="10" min="5" max="25" style="width:100%; padding:8px; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+          </div>
+          <div>
+            <label style="font-weight:600; display:block; margin-bottom:6px;">Grid Height:</label>
+            <input type="number" id="customHeight" value="10" min="5" max="25" style="width:100%; padding:8px; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+          </div>
+          <div>
+            <label style="font-weight:600; display:block; margin-bottom:6px;">Difficulty:</label>
+            <select id="customDiff" style="width:100%; padding:8px; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+              <option value="easy">Easy</option>
+              <option value="normal" selected>Normal</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-close-modal>Cancel</button>
+        <button class="btn btn-primary" id="btnGenerateCustom">Generate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import / Export Modal -->
+  <div class="modal-overlay" id="importModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Import & Export Puzzle</h3>
+        <button class="icon-btn" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div>
+            <label style="font-weight:600; display:block; margin-bottom:6px;">Current Puzzle Task String:</label>
+            <textarea id="exportTaskCode" readonly style="width:100%; height:60px; font-family:monospace; font-size:0.85rem; padding:8px; border-radius:var(--radius-sm); border:1px solid var(--border-color);"></textarea>
+            <button class="btn" id="btnCopyTask" style="margin-top:6px; font-size:0.8rem;">Copy to Clipboard</button>
+          </div>
+
+          <hr style="border:none; border-top:1px solid var(--border-color);">
+
+          <div>
+            <label style="font-weight:600; display:block; margin-bottom:6px;">Paste Task Code from puzzle-light-up.com:</label>
+            <textarea id="importTaskCode" placeholder="e.g. b2a0f0bBBd1g3d00bBf1a2b" style="width:100%; height:60px; font-family:monospace; font-size:0.85rem; padding:8px; border-radius:var(--radius-sm); border:1px solid var(--border-color);"></textarea>
+          </div>
+          <div style="display:flex; gap:12px;">
+            <div style="flex:1;">
+              <label style="font-weight:600; display:block; margin-bottom:6px;">Width:</label>
+              <input type="number" id="importWidth" value="7" min="4" max="35" style="width:100%; padding:8px; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+            </div>
+            <div style="flex:1;">
+              <label style="font-weight:600; display:block; margin-bottom:6px;">Height:</label>
+              <input type="number" id="importHeight" value="7" min="4" max="35" style="width:100%; padding:8px; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-close-modal>Cancel</button>
+        <button class="btn btn-primary" id="btnSubmitImport">Load Puzzle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Modal -->
+  <div class="modal-overlay" id="shareModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Share Puzzle</h3>
+        <button class="icon-btn" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom:12px;">You can share this puzzle code with anyone or load it on other devices:</p>
+        <textarea id="shareTaskCode" readonly style="width:100%; height:70px; font-family:monospace; font-size:0.85rem; padding:8px; border-radius:var(--radius-sm); border:1px solid var(--border-color);"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('shareTaskCode').value); alert('Puzzle code copied to clipboard!');">Copy Code</button>
+        <button class="btn" data-close-modal>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Victory Modal -->
+  <div class="modal-overlay" id="victoryModal">
+    <div class="modal-card victory-card">
+      <div style="font-size:3rem; margin-bottom:8px;">💡🎉</div>
+      <h2 class="victory-title">Puzzle Solved!</h2>
+      <p style="color:var(--text-muted);">Congratulations! All squares are illuminated and all clues are satisfied.</p>
+      
+      <div class="victory-stats">
+        <div class="stat-box">
+          <div class="stat-value" id="victoryTime">01:24</div>
+          <div class="stat-label">Solve Time</div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:center; gap:12px; margin-top:20px;">
+        <button class="btn" data-close-modal>Review Board</button>
+        <button class="btn btn-primary" id="btnNextPuzzle">Next Puzzle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/solver.js"></script>
+  <script src="js/generator.js"></script>
+  <script src="js/puzzles.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    // Register Service Worker for Offline PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

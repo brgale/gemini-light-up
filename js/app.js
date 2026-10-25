@@ -1,0 +1,1342 @@
+/**
+ * Light Up (Akari) - Offline Game Application Controller
+ */
+
+class LightUpApp {
+  constructor() {
+    this.width = 7;
+    this.height = 7;
+    this.board = []; // 2D array: -1=white, -2=black(unnumbered), 0..4=black with clue
+    this.task = '';
+    this.puzzleTitle = '7x7 Easy';
+    this.puzzleID = '';
+
+    this.bulbs = new Set(); // Set of "r,c"
+    this.crosses = new Set(); // Set of "r,c"
+    this.lastChange = null; // { r, c }
+    this.focusedCell = { r: 0, c: 0 };
+
+    this.undoStack = [];
+    this.redoStack = [];
+    this.checkpoints = [];
+
+    // Drag tracking
+    this.isMouseDown = false;
+    this.dragAction = null; // 'bulb' | 'cross' | 'erase'
+    this.lastDragCell = null; // 'r,c'
+
+    // Timer
+    this.timerSeconds = 0;
+    this.timerInterval = null;
+    this.isPaused = false;
+    this.isSolved = false;
+
+    // Zoom
+    this.zoomScale = 1.0;
+
+    // Settings
+    this.settings = {
+      theme: 'light',
+      blueLight: false,
+      autoCross: false,
+      grayCompleted: true,
+      markErrors: true,
+      showCoordinates: false,
+      hideTimer: false,
+      sound: true,
+      highlightChange: true,
+      drawStyle: 'cycle' // 'bulb' | 'cross' | 'cycle' | 'erase'
+    };
+
+    // Current category & difficulty (restore last active)
+    this.currentCat = localStorage.getItem('akari_last_cat') || '7x7';
+    this.currentDiff = localStorage.getItem('akari_last_diff') || 'easy';
+
+    this.loadSettings();
+    this.initDOM();
+    this.bindEvents();
+    this.initConfetti();
+
+    // Start with saved or initial puzzle
+    this.loadCategoryPuzzle(this.currentCat, this.currentDiff, false);
+  }
+
+  loadSettings() {
+    try {
+      const saved = localStorage.getItem('akari_settings');
+      if (saved) {
+        this.settings = { ...this.settings, ...JSON.parse(saved) };
+      }
+      // Ensure default drawStyle is cycle
+      if (!localStorage.getItem('akari_cycle_default_set')) {
+        this.settings.drawStyle = 'cycle';
+        localStorage.setItem('akari_cycle_default_set', 'true');
+        this.saveSettings();
+      }
+    } catch (e) {}
+
+    window.soundEngine.enabled = this.settings.sound;
+    this.applyTheme();
+  }
+
+  saveSettings() {
+    try {
+      localStorage.setItem('akari_settings', JSON.stringify(this.settings));
+    } catch (e) {}
+  }
+
+  applyTheme() {
+    document.documentElement.setAttribute('data-theme', this.settings.theme);
+    document.documentElement.setAttribute('data-blue-light', this.settings.blueLight ? 'true' : 'false');
+  }
+
+  initDOM() {
+    this.boardEl = document.getElementById('puzzleBoard');
+    this.boardViewport = document.getElementById('boardViewport');
+    this.timerDisplay = document.getElementById('timerDisplay');
+    this.puzzleTitleEl = document.getElementById('puzzleTitle');
+    this.puzzleIdEl = document.getElementById('puzzleId');
+    this.checkpointsListEl = document.getElementById('checkpointsList');
+    this.hintToastEl = document.getElementById('hintToast');
+    this.hintMessageEl = document.getElementById('hintMessage');
+    this.pauseOverlay = document.getElementById('pauseOverlay');
+    this.zoomSlider = document.getElementById('zoomSlider');
+    this.zoomLevelLabel = document.getElementById('zoomLevelLabel');
+
+    this.updateToolButtons();
+  }
+
+  bindEvents() {
+    // Top Controls
+    document.getElementById('btnUndo').addEventListener('click', () => this.undo());
+    document.getElementById('btnRedo').addEventListener('click', () => this.redo());
+    document.getElementById('btnPause').addEventListener('click', () => this.togglePause());
+    document.getElementById('btnResume').addEventListener('click', () => this.togglePause(false));
+    document.getElementById('btnSaveCheckpoint').addEventListener('click', () => this.saveCheckpoint());
+    document.getElementById('btnSettings').addEventListener('click', () => this.openModal('settingsModal'));
+    document.getElementById('btnRules').addEventListener('click', () => this.openModal('rulesModal'));
+    document.getElementById('btnSidebarToggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
+
+    // Action tools
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const style = btn.getAttribute('data-tool');
+        if (style) {
+          this.settings.drawStyle = style;
+          this.updateToolButtons();
+        }
+      });
+    });
+
+    // Zoom slider
+    if (this.zoomSlider) {
+      this.zoomSlider.addEventListener('input', (e) => {
+        this.setZoom(parseFloat(e.target.value));
+      });
+    }
+    document.getElementById('btnZoomFit').addEventListener('click', () => this.fitBoard());
+
+    // Bottom action buttons
+    document.getElementById('btnCheckDone').addEventListener('click', () => this.checkSolution(true));
+    document.getElementById('btnHint').addEventListener('click', () => this.giveHint());
+    document.getElementById('btnStartOver').addEventListener('click', () => this.startOver());
+    document.getElementById('btnNewPuzzle').addEventListener('click', () => this.newRandomPuzzle());
+    document.getElementById('btnPrint').addEventListener('click', () => window.print());
+    document.getElementById('btnShare').addEventListener('click', () => this.openShareModal());
+    document.getElementById('btnImportExport').addEventListener('click', () => this.openImportModal());
+
+    // Navigation items
+    document.querySelectorAll('[data-cat]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        const cat = el.getAttribute('data-cat');
+        const diff = el.getAttribute('data-diff') || 'easy';
+        this.loadCategoryPuzzle(cat, diff, false);
+        if (window.innerWidth <= 768) {
+          document.getElementById('sidebar').classList.add('collapsed');
+        }
+      });
+    });
+
+    // Hint Toast Close
+    document.getElementById('btnHintClose').addEventListener('click', () => {
+      this.hintToastEl.classList.remove('show');
+    });
+
+    // Modal Close buttons
+    document.querySelectorAll('[data-close-modal]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const modal = btn.closest('.modal-overlay');
+        if (modal) modal.classList.remove('open');
+      });
+    });
+
+    // Settings inputs
+    this.bindSettingsInputs();
+
+    // Global Mouse Events for drag
+    window.addEventListener('mouseup', () => {
+      this.isMouseDown = false;
+      this.dragAction = null;
+      this.lastDragCell = null;
+    });
+
+    this.boardEl.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
+
+    window.addEventListener('contextmenu', (e) => {
+      if (e.target.closest('#puzzleBoard')) {
+        e.preventDefault();
+      }
+    });
+
+    // Mousemove over board using document.elementFromPoint for continuous drag
+    this.boardEl.addEventListener('mousemove', (e) => {
+      if (!this.isMouseDown || !this.dragAction) return;
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const cell = el ? el.closest('.cell') : null;
+      if (cell && cell.dataset.r !== undefined && cell.dataset.c !== undefined) {
+        const r = parseInt(cell.dataset.r, 10);
+        const c = parseInt(cell.dataset.c, 10);
+        if (!isNaN(r) && !isNaN(c)) {
+          this.handleCellMouseEnter(e, r, c);
+        }
+      }
+    });
+
+    // Touch support for drag
+    this.boardEl.addEventListener('touchmove', (e) => {
+      if (!this.isMouseDown || !this.dragAction) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      const cell = el ? el.closest('.cell') : null;
+      if (cell && cell.dataset.r !== undefined && cell.dataset.c !== undefined) {
+        const r = parseInt(cell.dataset.r, 10);
+        const c = parseInt(cell.dataset.c, 10);
+        if (!isNaN(r) && !isNaN(c)) {
+          this.handleCellMouseEnter(e, r, c);
+        }
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => {
+      this.isMouseDown = false;
+      this.dragAction = null;
+      this.lastDragCell = null;
+    });
+
+    window.addEventListener('beforeunload', () => {
+      this.saveCurrentState();
+    });
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => this.handleKeyDown(e));
+
+    // Custom Generator modal
+    document.getElementById('btnCustomPuzzle').addEventListener('click', () => this.openModal('customModal'));
+    document.getElementById('btnGenerateCustom').addEventListener('click', () => this.generateCustomPuzzle());
+
+    // Import modal submit
+    document.getElementById('btnSubmitImport').addEventListener('click', () => this.importTaskCode());
+    document.getElementById('btnCopyTask').addEventListener('click', () => {
+      const code = document.getElementById('exportTaskCode').value;
+      navigator.clipboard.writeText(code).then(() => {
+        alert('Task code copied to clipboard!');
+      });
+    });
+
+    // Victory modal buttons
+    document.getElementById('btnNextPuzzle').addEventListener('click', () => {
+      this.closeModal('victoryModal');
+      this.newRandomPuzzle();
+    });
+  }
+
+  bindSettingsInputs() {
+    const bindToggle = (id, prop, callback) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.checked = !!this.settings[prop];
+      el.addEventListener('change', () => {
+        this.settings[prop] = el.checked;
+        this.saveSettings();
+        if (callback) callback();
+      });
+    };
+
+    bindToggle('settingNightMode', 'theme', () => {
+      this.settings.theme = document.getElementById('settingNightMode').checked ? 'dark' : 'light';
+      this.applyTheme();
+    });
+    bindToggle('settingBlueLight', 'blueLight', () => this.applyTheme());
+    bindToggle('settingAutoCross', 'autoCross');
+    bindToggle('settingGrayCompleted', 'grayCompleted', () => this.renderBoard());
+    bindToggle('settingMarkErrors', 'markErrors', () => this.renderBoard());
+    bindToggle('settingShowCoords', 'showCoordinates', () => this.renderBoard());
+    bindToggle('settingHideTimer', 'hideTimer', () => {
+      this.timerDisplay.style.visibility = this.settings.hideTimer ? 'hidden' : 'visible';
+    });
+    bindToggle('settingSound', 'sound', () => {
+      window.soundEngine.enabled = this.settings.sound;
+    });
+    bindToggle('settingHighlightChange', 'highlightChange', () => this.renderBoard());
+  }
+
+  updateToolButtons() {
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-tool') === this.settings.drawStyle);
+    });
+  }
+
+  getCategoryKey(cat = this.currentCat, diff = this.currentDiff) {
+    if (cat === 'daily') return 'akari_state_daily';
+    if (cat === 'special') return `akari_state_special_${diff}`;
+    if (cat === 'custom') return 'akari_state_custom';
+    return `akari_state_${cat}_${diff}`;
+  }
+
+  saveCurrentState() {
+    if (!this.task || !this.board || this.board.length === 0) return;
+    try {
+      const key = this.getCategoryKey();
+      const state = {
+        cat: this.currentCat,
+        diff: this.currentDiff,
+        width: this.width,
+        height: this.height,
+        task: this.task,
+        puzzleTitle: this.puzzleTitle,
+        puzzleID: this.puzzleID,
+        bulbs: Array.from(this.bulbs),
+        crosses: Array.from(this.crosses),
+        timerSeconds: this.timerSeconds,
+        isSolved: this.isSolved,
+        lastChange: this.lastChange,
+        checkpoints: this.checkpoints.map(cp => ({
+          id: cp.id,
+          bulbs: Array.from(cp.bulbs),
+          crosses: Array.from(cp.crosses),
+          time: cp.time
+        })),
+        undoStack: this.undoStack.map(u => ({
+          prevBulbs: Array.from(u.prevBulbs),
+          prevCrosses: Array.from(u.prevCrosses),
+          newBulbs: Array.from(u.newBulbs),
+          newCrosses: Array.from(u.newCrosses),
+          lastChange: u.lastChange
+        })),
+        redoStack: this.redoStack.map(r => ({
+          prevBulbs: Array.from(r.prevBulbs),
+          prevCrosses: Array.from(r.prevCrosses),
+          newBulbs: Array.from(r.newBulbs),
+          newCrosses: Array.from(r.newCrosses),
+          lastChange: r.lastChange
+        }))
+      };
+      localStorage.setItem(key, JSON.stringify(state));
+      localStorage.setItem('akari_last_cat', this.currentCat);
+      localStorage.setItem('akari_last_diff', this.currentDiff);
+    } catch (e) {
+      console.error('Failed to save state:', e);
+    }
+  }
+
+  restoreSavedPuzzle(saved) {
+    this.width = saved.width;
+    this.height = saved.height;
+    this.task = saved.task;
+    this.puzzleTitle = saved.puzzleTitle || `${this.width}x${this.height}`;
+    this.puzzleID = String(saved.puzzleID || '');
+
+    this.board = AkariSolver.decodeTask(this.task, this.width, this.height);
+    this.solver = new AkariSolver(this.width, this.height, this.board);
+
+    this.bulbs = new Set(saved.bulbs || []);
+    this.crosses = new Set(saved.crosses || []);
+    this.lastChange = saved.lastChange || null;
+    this.isSolved = !!saved.isSolved;
+    this.timerSeconds = saved.timerSeconds || 0;
+
+    this.checkpoints = (saved.checkpoints || []).map(cp => ({
+      id: cp.id,
+      bulbs: new Set(cp.bulbs),
+      crosses: new Set(cp.crosses),
+      time: cp.time
+    }));
+
+    this.undoStack = (saved.undoStack || []).map(u => ({
+      prevBulbs: new Set(u.prevBulbs),
+      prevCrosses: new Set(u.prevCrosses),
+      newBulbs: new Set(u.newBulbs),
+      newCrosses: new Set(u.newCrosses),
+      lastChange: u.lastChange
+    }));
+
+    this.redoStack = (saved.redoStack || []).map(r => ({
+      prevBulbs: new Set(r.prevBulbs),
+      prevCrosses: new Set(r.prevCrosses),
+      newBulbs: new Set(r.newBulbs),
+      newCrosses: new Set(r.newCrosses),
+      lastChange: r.lastChange
+    }));
+
+    this.puzzleTitleEl.textContent = this.puzzleTitle;
+    this.puzzleIdEl.textContent = this.puzzleID;
+    this.timerDisplay.textContent = this.formatTime(this.timerSeconds);
+
+    this.stopTimer();
+    if (!this.isSolved) {
+      this.startTimer();
+    }
+
+    this.updateCheckpointsUI();
+    this.renderBoard();
+    this.applySavedZoom();
+  }
+
+  getPlayedTasks() {
+    try {
+      const raw = localStorage.getItem('akari_played_tasks');
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch (e) {
+      return new Set();
+    }
+  }
+
+  markTaskPlayed(task) {
+    if (!task) return;
+    try {
+      const set = this.getPlayedTasks();
+      set.add(task);
+      const arr = Array.from(set);
+      if (arr.length > 1000) arr.splice(0, arr.length - 1000);
+      localStorage.setItem('akari_played_tasks', JSON.stringify(arr));
+    } catch (e) {}
+  }
+
+  loadCategoryPuzzle(cat, diff, forceNew = false) {
+    // Save current active category before switching
+    if (this.task && this.board && this.board.length > 0) {
+      this.saveCurrentState();
+    }
+
+    this.currentCat = cat;
+    this.currentDiff = diff;
+
+    // Update sidebar active item
+    document.querySelectorAll('[data-cat]').forEach(item => {
+      const iCat = item.getAttribute('data-cat');
+      const iDiff = item.getAttribute('data-diff') || 'easy';
+      if (iCat === cat && (cat === 'daily' || iDiff === diff)) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+
+    // Check for saved state unless forceNew
+    if (!forceNew) {
+      try {
+        const key = this.getCategoryKey(cat, diff);
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          const today = new Date().toISOString().slice(0, 10);
+          const isDailyExpired = (cat === 'daily' && saved.puzzleID !== today);
+
+          if (!isDailyExpired && saved.task && saved.width && saved.height) {
+            this.restoreSavedPuzzle(saved);
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('Error reading saved puzzle:', e);
+      }
+    }
+
+    // Daily Challenge
+    if (cat === 'daily') {
+      const today = new Date().toISOString().slice(0, 10);
+      const seed = AkariGenerator.getSeedForDate(today);
+      const puzzle = AkariGenerator.generate(10, 10, 'normal', seed);
+      if (puzzle) {
+        this.loadPuzzle({
+          width: 10,
+          height: 10,
+          task: puzzle.task,
+          title: `Daily Challenge (${today})`,
+          puzzleID: today
+        });
+        this.saveCurrentState();
+        return;
+      }
+    }
+
+    // Try finding in built-in library
+    const lib = window.OFFLINE_PUZZLE_LIBRARY || [];
+    const matches = lib.filter(p => {
+      if (cat === 'special') return p.category === 'special' && p.difficulty === diff;
+      return p.category === cat && p.difficulty === diff;
+    });
+
+    const played = this.getPlayedTasks();
+    let unplayed = matches.filter(p => !played.has(p.task) && p.task !== this.task);
+
+    // If unplayed library puzzles exist, use them
+    if (unplayed.length > 0) {
+      const p = unplayed[Math.floor(Math.random() * unplayed.length)];
+      this.loadPuzzle({
+        width: p.width,
+        height: p.height,
+        task: p.task,
+        title: p.title || `${cat.toUpperCase()} ${diff.toUpperCase()}`,
+        puzzleID: p.puzzleID || Math.floor(Math.random() * 9000000 + 1000000)
+      });
+      this.markTaskPlayed(p.task);
+      this.saveCurrentState();
+      return;
+    }
+
+    // If all cached puzzles were played (or none available), generate fresh on the fly!
+    const [w, h] = cat === '7x7' ? [7, 7] : (cat === '10x10' ? [10, 10] : (cat === '14x14' ? [14, 14] : [25, 25]));
+    const gen = AkariGenerator.generate(w, h, diff);
+    if (gen) {
+      this.loadPuzzle({
+        width: w,
+        height: h,
+        task: gen.task,
+        title: `${cat} ${diff.toUpperCase()} (Fresh)`,
+        puzzleID: Math.floor(Math.random() * 9000000 + 1000000)
+      });
+      this.markTaskPlayed(gen.task);
+      this.saveCurrentState();
+      return;
+    }
+
+    // Recycling fallback if generation took too long (e.g. on 25x25)
+    if (matches.length > 0) {
+      const otherMatches = matches.filter(m => m.task !== this.task);
+      const pool = otherMatches.length > 0 ? otherMatches : matches;
+      const p = pool[Math.floor(Math.random() * pool.length)];
+      this.loadPuzzle({
+        width: p.width,
+        height: p.height,
+        task: p.task,
+        title: p.title || `${cat.toUpperCase()} ${diff.toUpperCase()}`,
+        puzzleID: p.puzzleID || Math.floor(Math.random() * 9000000 + 1000000)
+      });
+      this.saveCurrentState();
+    }
+  }
+
+  loadPuzzle({ width, height, task, title, puzzleID }) {
+    this.width = width;
+    this.height = height;
+    this.task = task;
+    this.puzzleTitle = title || `${width}x${height}`;
+    this.puzzleID = String(puzzleID || '');
+
+    this.board = AkariSolver.decodeTask(task, width, height);
+    this.solver = new AkariSolver(width, height, this.board);
+
+    this.bulbs = new Set();
+    this.crosses = new Set();
+    this.undoStack = [];
+    this.redoStack = [];
+    this.checkpoints = [];
+    this.lastChange = null;
+    this.isSolved = false;
+
+    this.puzzleTitleEl.textContent = this.puzzleTitle;
+    this.puzzleIdEl.textContent = this.puzzleID;
+
+    this.resetTimer();
+    this.startTimer();
+    this.updateCheckpointsUI();
+    this.renderBoard();
+    this.applySavedZoom();
+  }
+
+  renderBoard() {
+    this.boardEl.innerHTML = '';
+
+    // Calculate light rays & clashes
+    const { litMap, clashes } = this.calculateLight();
+
+    // Coordinate labels setup
+    const showCoords = this.settings.showCoordinates;
+    const colCount = showCoords ? this.width + 1 : this.width;
+    const rowCount = showCoords ? this.height + 1 : this.height;
+
+    // Ideal cell size based on board dimension
+    const baseCellSize = Math.max(22, Math.min(56, Math.floor(540 / Math.max(this.width, this.height))));
+    this.boardEl.style.setProperty('--cell-size', `${baseCellSize}px`);
+    this.boardEl.style.gridTemplateColumns = showCoords
+      ? `24px repeat(${this.width}, ${baseCellSize}px)`
+      : `repeat(${this.width}, ${baseCellSize}px)`;
+
+    // Top coordinates
+    if (showCoords) {
+      const corner = document.createElement('div');
+      corner.className = 'coord-label';
+      this.boardEl.appendChild(corner);
+      for (let c = 0; c < this.width; c++) {
+        const colLbl = document.createElement('div');
+        colLbl.className = 'coord-label';
+        colLbl.textContent = String.fromCharCode(65 + (c % 26));
+        this.boardEl.appendChild(colLbl);
+      }
+    }
+
+    for (let r = 0; r < this.height; r++) {
+      if (showCoords) {
+        const rowLbl = document.createElement('div');
+        rowLbl.className = 'coord-label';
+        rowLbl.textContent = String(r + 1);
+        this.boardEl.appendChild(rowLbl);
+      }
+
+      for (let c = 0; c < this.width; c++) {
+        const cellVal = this.board[r][c];
+        const key = `${r},${c}`;
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.r = r;
+        cell.dataset.c = c;
+        cell.style.width = `${baseCellSize}px`;
+        cell.style.height = `${baseCellSize}px`;
+
+        if (this.focusedCell.r === r && this.focusedCell.c === c) {
+          cell.classList.add('keyboard-focus');
+        }
+
+        if (this.settings.highlightChange && this.lastChange && this.lastChange.r === r && this.lastChange.c === c) {
+          cell.classList.add('last-change');
+        }
+
+        if (cellVal >= -2 && cellVal !== -1) {
+          // Black wall cell
+          cell.classList.add('wall');
+          if (cellVal >= 0) {
+            const clueSpan = document.createElement('span');
+            clueSpan.className = 'clue-number';
+            clueSpan.textContent = cellVal;
+            cell.appendChild(clueSpan);
+
+            // Check clue status
+            const clueState = this.checkClueState(r, c, cellVal);
+            if (this.settings.markErrors && clueState === 'error') {
+              cell.classList.add('wall-error');
+            } else if (this.settings.grayCompleted && clueState === 'satisfied') {
+              cell.classList.add('wall-satisfied');
+            }
+          }
+        } else {
+          // White room cell
+          const isLit = litMap.has(key);
+          const hasBulb = this.bulbs.has(key);
+          const hasCross = this.crosses.has(key);
+          const isClashing = clashes.has(key);
+
+          if (isLit) {
+            cell.classList.add('lit');
+          }
+
+          if (hasBulb) {
+            cell.classList.add('lit-center');
+            if (isClashing) {
+              cell.classList.add('bulb-clash');
+            }
+            cell.innerHTML = this.getBulbSVG();
+          } else if (hasCross) {
+            const cross = document.createElement('div');
+            cross.className = 'cross-mark';
+            cell.appendChild(cross);
+          }
+
+          // Mouse / Touch Event listeners
+          cell.addEventListener('mousedown', (e) => this.handleCellMouseDown(e, r, c));
+          cell.addEventListener('mouseenter', (e) => this.handleCellMouseEnter(e, r, c));
+          cell.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+          });
+        }
+
+        this.boardEl.appendChild(cell);
+      }
+    }
+  }
+
+  getBulbSVG() {
+    return `<svg class="bulb-icon-svg" viewBox="0 0 24 24">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zm-2 17h4v1h-4v-1zm1 2h2v1h-2v-1z"/>
+    </svg>`;
+  }
+
+  calculateLight() {
+    const litMap = new Map(); // "r,c" -> count of rays illuminating it
+    const clashes = new Set(); // bulbs that see another bulb
+
+    for (const b of this.bulbs) {
+      const [br, bc] = b.split(',').map(Number);
+      litMap.set(b, (litMap.get(b) || 0) + 1);
+
+      const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+      for (const [dr, dc] of dirs) {
+        let nr = br + dr;
+        let nc = bc + dc;
+        while (nr >= 0 && nr < this.height && nc >= 0 && nc < this.width && this.board[nr][nc] === -1) {
+          const key = `${nr},${nc}`;
+          litMap.set(key, (litMap.get(key) || 0) + 1);
+          if (this.bulbs.has(key)) {
+            clashes.add(b);
+            clashes.add(key);
+          }
+          nr += dr;
+          nc += dc;
+        }
+      }
+    }
+
+    return { litMap, clashes };
+  }
+
+  checkClueState(r, c, clue) {
+    const adj = this.solver.getAdjWhite(r, c);
+    let bulbCount = 0;
+    let freeCount = 0;
+    for (const p of adj) {
+      if (this.bulbs.has(p.key)) bulbCount++;
+      else if (!this.crosses.has(p.key)) freeCount++;
+    }
+
+    if (bulbCount > clue || (bulbCount + freeCount < clue)) {
+      return 'error';
+    }
+    if (bulbCount === clue) {
+      return 'satisfied';
+    }
+    return 'progress';
+  }
+
+  handleCellMouseDown(e, r, c) {
+    if (this.isPaused || this.isSolved) return;
+    if (this.board[r][c] !== -1) return;
+    if (e) e.preventDefault();
+
+    this.focusedCell = { r, c };
+    this.isMouseDown = true;
+    this.lastDragCell = `${r},${c}`;
+
+    const isRightClick = (e.button === 2 || (e.button === 0 && e.ctrlKey));
+
+    if (isRightClick) {
+      // Right Click
+      this.toggleCross(r, c);
+      this.dragAction = this.crosses.has(`${r},${c}`) ? 'cross' : 'erase';
+      return;
+    }
+
+    // Left Click
+    const key = `${r},${c}`;
+    const drawStyle = this.settings.drawStyle;
+
+    if (drawStyle === 'cycle') {
+      // empty -> bulb -> cross -> empty
+      if (!this.bulbs.has(key) && !this.crosses.has(key)) {
+        this.setCellState(r, c, 'bulb');
+        this.dragAction = 'bulb';
+      } else if (this.bulbs.has(key)) {
+        this.setCellState(r, c, 'cross');
+        this.dragAction = 'cross';
+      } else {
+        this.setCellState(r, c, 'empty');
+        this.dragAction = 'erase';
+      }
+    } else if (drawStyle === 'bulb') {
+      if (this.bulbs.has(key)) {
+        this.setCellState(r, c, 'empty');
+        this.dragAction = 'erase';
+      } else {
+        this.setCellState(r, c, 'bulb');
+        this.dragAction = 'bulb';
+      }
+    } else if (drawStyle === 'cross') {
+      if (this.crosses.has(key)) {
+        this.setCellState(r, c, 'empty');
+        this.dragAction = 'erase';
+      } else {
+        this.setCellState(r, c, 'cross');
+        this.dragAction = 'cross';
+      }
+    } else if (drawStyle === 'erase') {
+      this.setCellState(r, c, 'empty');
+      this.dragAction = 'erase';
+    }
+  }
+
+  handleCellMouseEnter(e, r, c) {
+    if (!this.isMouseDown || !this.dragAction) return;
+    if (this.board[r][c] !== -1) return;
+    const key = `${r},${c}`;
+    if (this.lastDragCell === key) return;
+    this.lastDragCell = key;
+
+    if (this.dragAction === 'bulb') {
+      if (!this.bulbs.has(key)) {
+        this.setCellState(r, c, 'bulb');
+      }
+    } else if (this.dragAction === 'cross') {
+      if (!this.crosses.has(key)) {
+        this.setCellState(r, c, 'cross');
+      }
+    } else if (this.dragAction === 'erase') {
+      if (this.bulbs.has(key) || this.crosses.has(key)) {
+        this.setCellState(r, c, 'empty');
+      }
+    }
+  }
+
+  handleCellRightClick(r, c) {
+    if (this.isPaused || this.isSolved) return;
+    if (this.board[r][c] !== -1) return;
+    this.toggleCross(r, c);
+  }
+
+  toggleBulb(r, c) {
+    const key = `${r},${c}`;
+    if (this.bulbs.has(key)) {
+      this.setCellState(r, c, 'empty');
+    } else {
+      this.setCellState(r, c, 'bulb');
+    }
+  }
+
+  toggleCross(r, c) {
+    const key = `${r},${c}`;
+    if (this.crosses.has(key)) {
+      this.setCellState(r, c, 'empty');
+    } else {
+      this.setCellState(r, c, 'cross');
+    }
+  }
+
+  setCellState(r, c, newState) {
+    const key = `${r},${c}`;
+    const prevBulbs = new Set(this.bulbs);
+    const prevCrosses = new Set(this.crosses);
+
+    if (newState === 'bulb') {
+      this.bulbs.add(key);
+      this.crosses.delete(key);
+      window.soundEngine.playBulb();
+    } else if (newState === 'cross') {
+      this.crosses.add(key);
+      this.bulbs.delete(key);
+      window.soundEngine.playCross();
+    } else {
+      this.bulbs.delete(key);
+      this.crosses.delete(key);
+      window.soundEngine.playErase();
+    }
+
+    // Auto-cross adjacent numbers if enabled
+    if (this.settings.autoCross && newState === 'bulb') {
+      const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+      for (const [dr, dc] of dirs) {
+        const nr = r + dr;
+        const nc = c + dc;
+        if (nr >= 0 && nr < this.height && nc >= 0 && nc < this.width && this.board[nr][nc] >= 0) {
+          const clue = this.board[nr][nc];
+          const adj = this.solver.getAdjWhite(nr, nc);
+          const adjBulbs = adj.filter(p => this.bulbs.has(p.key));
+          if (adjBulbs.length === clue) {
+            for (const p of adj) {
+              if (!this.bulbs.has(p.key)) {
+                this.crosses.add(p.key);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    this.undoStack.push({
+      prevBulbs,
+      prevCrosses,
+      newBulbs: new Set(this.bulbs),
+      newCrosses: new Set(this.crosses),
+      lastChange: { r, c }
+    });
+    this.redoStack = [];
+    this.lastChange = { r, c };
+
+    this.renderBoard();
+    this.saveCurrentState();
+    this.checkSolution(false); // auto-check silently
+  }
+
+  undo() {
+    if (this.undoStack.length === 0) return;
+    const entry = this.undoStack.pop();
+    this.redoStack.push(entry);
+
+    this.bulbs = new Set(entry.prevBulbs);
+    this.crosses = new Set(entry.prevCrosses);
+    this.lastChange = entry.lastChange;
+    this.renderBoard();
+    this.saveCurrentState();
+    window.soundEngine.playTone(350, 'sine', 0.08, 0.08);
+  }
+
+  redo() {
+    if (this.redoStack.length === 0) return;
+    const entry = this.redoStack.pop();
+    this.undoStack.push(entry);
+
+    this.bulbs = new Set(entry.newBulbs);
+    this.crosses = new Set(entry.newCrosses);
+    this.lastChange = entry.lastChange;
+    this.renderBoard();
+    this.saveCurrentState();
+    window.soundEngine.playTone(450, 'sine', 0.08, 0.08);
+  }
+
+  saveCheckpoint() {
+    const cp = {
+      id: this.checkpoints.length + 1,
+      bulbs: new Set(this.bulbs),
+      crosses: new Set(this.crosses),
+      time: this.timerSeconds
+    };
+    this.checkpoints.push(cp);
+    this.updateCheckpointsUI();
+    this.saveCurrentState();
+    window.soundEngine.playClueSatisfied();
+  }
+
+  restoreCheckpoint(cp) {
+    this.undoStack.push({
+      prevBulbs: new Set(this.bulbs),
+      prevCrosses: new Set(this.crosses),
+      newBulbs: new Set(cp.bulbs),
+      newCrosses: new Set(cp.crosses),
+      lastChange: null
+    });
+    this.bulbs = new Set(cp.bulbs);
+    this.crosses = new Set(cp.crosses);
+    this.renderBoard();
+    this.saveCurrentState();
+  }
+
+  updateCheckpointsUI() {
+    this.checkpointsListEl.innerHTML = '';
+    for (const cp of this.checkpoints) {
+      const badge = document.createElement('span');
+      badge.className = 'cp-badge';
+      badge.innerHTML = `CP ${cp.id} (${this.formatTime(cp.time)})`;
+      badge.addEventListener('click', () => this.restoreCheckpoint(cp));
+      this.checkpointsListEl.appendChild(badge);
+    }
+  }
+
+  handleKeyDown(e) {
+    if (this.isPaused || this.isSolved) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    const { r, c } = this.focusedCell;
+
+    if (e.key === 'ArrowUp' && r > 0) {
+      this.focusedCell.r--;
+      this.renderBoard();
+      e.preventDefault();
+    } else if (e.key === 'ArrowDown' && r < this.height - 1) {
+      this.focusedCell.r++;
+      this.renderBoard();
+      e.preventDefault();
+    } else if (e.key === 'ArrowLeft' && c > 0) {
+      this.focusedCell.c--;
+      this.renderBoard();
+      e.preventDefault();
+    } else if (e.key === 'ArrowRight' && c < this.width - 1) {
+      this.focusedCell.c++;
+      this.renderBoard();
+      e.preventDefault();
+    } else if (e.key === ' ' || e.key.toLowerCase() === 'b') {
+      if (this.board[r][c] === -1) this.toggleBulb(r, c);
+      e.preventDefault();
+    } else if (e.key.toLowerCase() === 'x' || e.key.toLowerCase() === 'c') {
+      if (this.board[r][c] === -1) this.toggleCross(r, c);
+      e.preventDefault();
+    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (this.board[r][c] === -1) this.setCellState(r, c, 'empty');
+      e.preventDefault();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+      if (e.shiftKey) this.redo();
+      else this.undo();
+      e.preventDefault();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+      this.redo();
+      e.preventDefault();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      this.saveCheckpoint();
+      e.preventDefault();
+    } else if (e.key.toLowerCase() === 'h') {
+      this.giveHint();
+    } else if (e.key === 'Enter') {
+      this.checkSolution(true);
+    }
+  }
+
+  giveHint() {
+    if (this.isSolved) return;
+    const hint = this.solver.getHint(this.bulbs, this.crosses);
+    if (!hint) return;
+
+    this.hintMessageEl.textContent = hint.message;
+    this.hintToastEl.classList.add('show');
+
+    if (hint.r !== undefined && hint.c !== undefined) {
+      this.focusedCell = { r: hint.r, c: hint.c };
+      this.lastChange = { r: hint.r, c: hint.c };
+      this.renderBoard();
+    }
+
+    if (hint.type === 'error') {
+      window.soundEngine.playError();
+    } else {
+      window.soundEngine.playBulb();
+    }
+  }
+
+  checkSolution(manualClick = false) {
+    const { litMap, clashes } = this.calculateLight();
+
+    // 1. Check clashing bulbs
+    if (clashes.size > 0) {
+      if (manualClick) {
+        window.soundEngine.playError();
+        alert('Some light bulbs illuminate each other! Look for the red flashing bulbs.');
+      }
+      return false;
+    }
+
+    // 2. Check all white cells are lit
+    for (let r = 0; r < this.height; r++) {
+      for (let c = 0; c < this.width; c++) {
+        if (this.board[r][c] === -1) {
+          if (!litMap.has(`${r},${c}`)) {
+            if (manualClick) {
+              window.soundEngine.playError();
+              alert('Not all squares are lit up yet! Every white square must be illuminated.');
+            }
+            return false;
+          }
+        }
+      }
+    }
+
+    // 3. Check numbered clues
+    for (let r = 0; r < this.height; r++) {
+      for (let c = 0; c < this.width; c++) {
+        const clue = this.board[r][c];
+        if (clue >= 0) {
+          const adj = this.solver.getAdjWhite(r, c);
+          const adjBulbs = adj.filter(p => this.bulbs.has(p.key)).length;
+          if (adjBulbs !== clue) {
+            if (manualClick) {
+              window.soundEngine.playError();
+              alert(`Check number ${clue} at row ${r + 1}, column ${c + 1}. It has ${adjBulbs} bulbs instead of ${clue}.`);
+            }
+            return false;
+          }
+        }
+      }
+    }
+
+    // SUCCESS!
+    this.isSolved = true;
+    this.stopTimer();
+    this.saveCurrentState();
+    window.soundEngine.playVictory();
+    this.triggerConfetti();
+
+    document.getElementById('victoryTime').textContent = this.formatTime(this.timerSeconds);
+    this.openModal('victoryModal');
+    return true;
+  }
+
+  startOver() {
+    if (!confirm('Start over and clear all marks?')) return;
+    this.bulbs.clear();
+    this.crosses.clear();
+    this.undoStack = [];
+    this.redoStack = [];
+    this.lastChange = null;
+    this.resetTimer();
+    this.startTimer();
+    this.renderBoard();
+    this.saveCurrentState();
+  }
+
+  newRandomPuzzle() {
+    const [w, h] = this.currentCat === '7x7' ? [7, 7] : (this.currentCat === '10x10' ? [10, 10] : (this.currentCat === '14x14' ? [14, 14] : [25, 25]));
+
+    // For 7x7 and 10x10 boards, generate a fresh unique puzzle directly on-the-fly!
+    if (w <= 10) {
+      const gen = AkariGenerator.generate(w, h, this.currentDiff);
+      if (gen) {
+        this.loadPuzzle({
+          width: w,
+          height: h,
+          task: gen.task,
+          title: `${this.currentCat} ${this.currentDiff.toUpperCase()} (Fresh)`,
+          puzzleID: Math.floor(Math.random() * 9000000 + 1000000)
+        });
+        this.markTaskPlayed(gen.task);
+        this.saveCurrentState();
+        return;
+      }
+    }
+
+    // For larger boards or fallback, pick an unplayed authentic puzzle from library
+    this.loadCategoryPuzzle(this.currentCat, this.currentDiff, true);
+  }
+
+  getSizeKey() {
+    return `${this.width || 0}x${this.height || 0}`;
+  }
+
+  getSavedZoomForCurrentSize() {
+    try {
+      const savedMap = JSON.parse(localStorage.getItem('akari_zoom_by_size') || '{}');
+      const key = this.getSizeKey();
+      if (savedMap && typeof savedMap[key] === 'number') {
+        return Math.max(0.3, Math.min(2.5, savedMap[key]));
+      }
+    } catch (e) {
+      console.warn('Error reading zoom state:', e);
+    }
+    return 1.0;
+  }
+
+  saveZoomForCurrentSize(scale) {
+    if (!this.width || !this.height) return;
+    try {
+      const savedMap = JSON.parse(localStorage.getItem('akari_zoom_by_size') || '{}');
+      savedMap[this.getSizeKey()] = scale;
+      localStorage.setItem('akari_zoom_by_size', JSON.stringify(savedMap));
+    } catch (e) {
+      console.warn('Error saving zoom state:', e);
+    }
+  }
+
+  setZoom(scale, save = true) {
+    this.zoomScale = Math.max(0.3, Math.min(2.5, scale));
+    this.boardViewport.style.transform = `scale(${this.zoomScale})`;
+    if (this.zoomSlider) this.zoomSlider.value = this.zoomScale;
+    if (this.zoomLevelLabel) {
+      this.zoomLevelLabel.textContent = `${Math.round(this.zoomScale * 100)}%`;
+    }
+    if (save) {
+      this.saveZoomForCurrentSize(this.zoomScale);
+    }
+  }
+
+  applySavedZoom() {
+    const saved = this.getSavedZoomForCurrentSize();
+    this.setZoom(saved, false);
+  }
+
+  fitBoard() {
+    this.setZoom(1.0, true);
+  }
+
+  // Timer controls
+  startTimer() {
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    this.timerInterval = setInterval(() => {
+      if (!this.isPaused && !this.isSolved) {
+        this.timerSeconds++;
+        this.timerDisplay.textContent = this.formatTime(this.timerSeconds);
+        if (this.timerSeconds % 5 === 0) {
+          this.saveCurrentState();
+        }
+      }
+    }, 1000);
+  }
+
+  stopTimer() {
+    if (this.timerInterval) clearInterval(this.timerInterval);
+  }
+
+  resetTimer() {
+    this.stopTimer();
+    this.timerSeconds = 0;
+    this.isPaused = false;
+    this.timerDisplay.textContent = '00:00';
+    this.pauseOverlay.classList.remove('active');
+  }
+
+  togglePause(forceState = null) {
+    this.isPaused = forceState !== null ? forceState : !this.isPaused;
+    this.pauseOverlay.classList.toggle('active', this.isPaused);
+    document.getElementById('btnPause').style.display = this.isPaused ? 'none' : 'inline-flex';
+    document.getElementById('btnResume').style.display = this.isPaused ? 'inline-flex' : 'none';
+  }
+
+  formatTime(totalSec) {
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+
+  // Modals
+  openModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('open');
+  }
+
+  closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('open');
+  }
+
+  openShareModal() {
+    const el = document.getElementById('shareTaskCode');
+    if (el) el.value = this.task;
+    this.openModal('shareModal');
+  }
+
+  openImportModal() {
+    document.getElementById('exportTaskCode').value = this.task;
+    this.openModal('importModal');
+  }
+
+  importTaskCode() {
+    const code = document.getElementById('importTaskCode').value.trim();
+    const w = parseInt(document.getElementById('importWidth').value, 10);
+    const h = parseInt(document.getElementById('importHeight').value, 10);
+
+    if (!code || isNaN(w) || isNaN(h)) {
+      alert('Please enter valid puzzle code and dimensions.');
+      return;
+    }
+
+    try {
+      this.currentCat = 'custom';
+      this.currentDiff = 'imported';
+      this.loadPuzzle({
+        width: w,
+        height: h,
+        task: code,
+        title: `Custom ${w}x${h}`,
+        puzzleID: 'Imported'
+      });
+      this.saveCurrentState();
+      this.closeModal('importModal');
+    } catch (e) {
+      alert('Failed to load puzzle: ' + e.message);
+    }
+  }
+
+  generateCustomPuzzle() {
+    const w = parseInt(document.getElementById('customWidth').value, 10);
+    const h = parseInt(document.getElementById('customHeight').value, 10);
+    const diff = document.getElementById('customDiff').value;
+
+    const gen = AkariGenerator.generate(w, h, diff);
+    if (!gen) {
+      alert('Could not generate puzzle with those parameters. Try smaller dimensions.');
+      return;
+    }
+
+    this.closeModal('customModal');
+    this.currentCat = 'custom';
+    this.currentDiff = diff;
+    this.loadPuzzle({
+      width: w,
+      height: h,
+      task: gen.task,
+      title: `Custom ${w}x${h} (${diff.toUpperCase()})`,
+      puzzleID: Math.floor(Math.random() * 9000000 + 1000000)
+    });
+    this.saveCurrentState();
+  }
+
+  // Confetti Animation
+  initConfetti() {
+    this.confettiCanvas = document.getElementById('confettiCanvas');
+    this.confettiCtx = this.confettiCanvas ? this.confettiCanvas.getContext('2d') : null;
+    this.confettiParticles = [];
+
+    const resize = () => {
+      if (this.confettiCanvas) {
+        this.confettiCanvas.width = window.innerWidth;
+        this.confettiCanvas.height = window.innerHeight;
+      }
+    };
+    window.addEventListener('resize', resize);
+    resize();
+  }
+
+  triggerConfetti() {
+    if (!this.confettiCanvas) return;
+    this.confettiParticles = [];
+    const colors = ['#f59e0b', '#3b82f6', '#10b981', '#ec4899', '#8b5cf6', '#ef4444'];
+    for (let i = 0; i < 150; i++) {
+      this.confettiParticles.push({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+        vx: (Math.random() - 0.5) * 16,
+        vy: (Math.random() - 0.5) * 16 - 4,
+        size: Math.random() * 8 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        vr: (Math.random() - 0.5) * 10,
+        alpha: 1
+      });
+    }
+
+    const animate = () => {
+      if (this.confettiParticles.length === 0) {
+        if (this.confettiCtx) this.confettiCtx.clearRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
+        return;
+      }
+
+      this.confettiCtx.clearRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
+      for (let i = this.confettiParticles.length - 1; i >= 0; i--) {
+        const p = this.confettiParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.3; // gravity
+        p.rotation += p.vr;
+        p.alpha -= 0.008;
+
+        if (p.alpha <= 0) {
+          this.confettiParticles.splice(i, 1);
+          continue;
+        }
+
+        this.confettiCtx.save();
+        this.confettiCtx.globalAlpha = p.alpha;
+        this.confettiCtx.translate(p.x, p.y);
+        this.confettiCtx.rotate((p.rotation * Math.PI) / 180);
+        this.confettiCtx.fillStyle = p.color;
+        this.confettiCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        this.confettiCtx.restore();
+      }
+
+      requestAnimationFrame(animate);
+    };
+
+    animate();
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  window.app = new LightUpApp();
+});
