@@ -45,6 +45,7 @@ class LightUpApp {
       hideTimer: false,
       sound: true,
       highlightChange: true,
+      precisionDrag: true,
       drawStyle: 'cycle' // 'bulb' | 'cross' | 'cycle' | 'erase'
     };
 
@@ -66,6 +67,9 @@ class LightUpApp {
       const saved = localStorage.getItem('akari_settings');
       if (saved) {
         this.settings = { ...this.settings, ...JSON.parse(saved) };
+      }
+      if (this.settings.precisionDrag === undefined) {
+        this.settings.precisionDrag = true;
       }
       // Ensure default drawStyle is cycle
       if (!localStorage.getItem('akari_cycle_default_set')) {
@@ -207,7 +211,18 @@ class LightUpApp {
     this.bindSettingsInputs();
 
     // Global Mouse Events for drag
-    window.addEventListener('mouseup', () => {
+    window.addEventListener('mouseup', (e) => {
+      if (this.isMouseDown && this.dragAction && this.settings.precisionDrag && e && e.clientX !== undefined) {
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const cell = el ? el.closest('.cell') : null;
+        if (cell && cell.dataset.r !== undefined && cell.dataset.c !== undefined) {
+          const r = parseInt(cell.dataset.r, 10);
+          const c = parseInt(cell.dataset.c, 10);
+          if (!isNaN(r) && !isNaN(c) && this.board[r] && this.board[r][c] === -1) {
+            this.applyDragToCell(r, c);
+          }
+        }
+      }
       this.isMouseDown = false;
       this.dragAction = null;
       this.lastDragCell = null;
@@ -223,7 +238,7 @@ class LightUpApp {
       }
     });
 
-    // Mousemove over board using document.elementFromPoint for continuous drag
+    // Mousemove over board for continuous drag with precision hitbox
     this.boardEl.addEventListener('mousemove', (e) => {
       if (!this.isMouseDown || !this.dragAction) return;
       const el = document.elementFromPoint(e.clientX, e.clientY);
@@ -232,12 +247,12 @@ class LightUpApp {
         const r = parseInt(cell.dataset.r, 10);
         const c = parseInt(cell.dataset.c, 10);
         if (!isNaN(r) && !isNaN(c)) {
-          this.handleCellMouseEnter(e, r, c);
+          this.handleDragMove(e.clientX, e.clientY, cell, r, c);
         }
       }
     });
 
-    // Touch support for drag
+    // Touch support for drag with precision hitbox
     this.boardEl.addEventListener('touchmove', (e) => {
       if (!this.isMouseDown || !this.dragAction) return;
       const touch = e.touches[0];
@@ -248,12 +263,24 @@ class LightUpApp {
         const r = parseInt(cell.dataset.r, 10);
         const c = parseInt(cell.dataset.c, 10);
         if (!isNaN(r) && !isNaN(c)) {
-          this.handleCellMouseEnter(e, r, c);
+          this.handleDragMove(touch.clientX, touch.clientY, cell, r, c);
         }
       }
     }, { passive: true });
 
-    window.addEventListener('touchend', () => {
+    window.addEventListener('touchend', (e) => {
+      if (this.isMouseDown && this.dragAction && this.settings.precisionDrag && e && e.changedTouches && e.changedTouches[0]) {
+        const touch = e.changedTouches[0];
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        const cell = el ? el.closest('.cell') : null;
+        if (cell && cell.dataset.r !== undefined && cell.dataset.c !== undefined) {
+          const r = parseInt(cell.dataset.r, 10);
+          const c = parseInt(cell.dataset.c, 10);
+          if (!isNaN(r) && !isNaN(c) && this.board[r] && this.board[r][c] === -1) {
+            this.applyDragToCell(r, c);
+          }
+        }
+      }
       this.isMouseDown = false;
       this.dragAction = null;
       this.lastDragCell = null;
@@ -303,6 +330,7 @@ class LightUpApp {
       this.applyTheme();
     });
     bindToggle('settingBlueLight', 'blueLight', () => this.applyTheme());
+    bindToggle('settingPrecisionDrag', 'precisionDrag');
     bindToggle('settingAutoCross', 'autoCross');
     bindToggle('settingGrayCompleted', 'grayCompleted', () => this.renderBoard());
     bindToggle('settingMarkErrors', 'markErrors', () => this.renderBoard());
@@ -818,6 +846,37 @@ class LightUpApp {
 
   handleCellMouseEnter(e, r, c) {
     if (!this.isMouseDown || !this.dragAction) return;
+    if (this.board[r][c] !== -1) return;
+    const cell = (e && (e.currentTarget || e.target)) ? (e.currentTarget || e.target).closest('.cell') : null;
+    const clientX = e ? e.clientX : undefined;
+    const clientY = e ? e.clientY : undefined;
+    this.handleDragMove(clientX, clientY, cell, r, c);
+  }
+
+  handleDragMove(clientX, clientY, cell, r, c) {
+    if (!this.isMouseDown || !this.dragAction) return;
+    if (this.board[r][c] !== -1) return;
+    const key = `${r},${c}`;
+    if (this.lastDragCell === key) return;
+
+    if (this.settings.precisionDrag && cell && clientX !== undefined && clientY !== undefined && typeof cell.getBoundingClientRect === 'function') {
+      const rect = cell.getBoundingClientRect();
+      if (rect && rect.width > 0 && rect.height > 0) {
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dist = Math.hypot(clientX - cx, clientY - cy);
+        const threshold = Math.min(rect.width, rect.height) * 0.42;
+        if (dist > threshold) {
+          // Cursor is in outer corner fringe - ignore accidental diagonal clipping
+          return;
+        }
+      }
+    }
+
+    this.applyDragToCell(r, c);
+  }
+
+  applyDragToCell(r, c) {
     if (this.board[r][c] !== -1) return;
     const key = `${r},${c}`;
     if (this.lastDragCell === key) return;
