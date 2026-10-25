@@ -49,6 +49,20 @@ class LightUpApp {
     this.panStartScrollTop = 0;
     this.isSpacePressed = false;
 
+    // Touch Navigation & Kinetic Momentum (iPad standard behavior)
+    this.touchStartTime = 0;
+    this.touchStartX = 0;
+    this.touchStartY = 0;
+    this.touchTargetCell = null;
+    this.isTouchPanning = false;
+    this.touchVelocityX = 0;
+    this.touchVelocityY = 0;
+    this.lastTouchX = 0;
+    this.lastTouchY = 0;
+    this.lastTouchTime = 0;
+    this.momentumRaf = null;
+    this.justHandledTouchTap = false;
+
     // Settings
     this.settings = {
       theme: 'light',
@@ -61,6 +75,7 @@ class LightUpApp {
       sound: true,
       highlightChange: true,
       precisionDrag: true,
+      touchDragToPan: true,
       drawStyle: 'cycle' // 'bulb' | 'cross' | 'cycle' | 'erase' | 'pan'
     };
 
@@ -85,6 +100,9 @@ class LightUpApp {
       }
       if (this.settings.precisionDrag === undefined) {
         this.settings.precisionDrag = true;
+      }
+      if (this.settings.touchDragToPan === undefined) {
+        this.settings.touchDragToPan = true;
       }
       // Ensure default drawStyle is cycle
       if (!localStorage.getItem('akari_cycle_default_set')) {
@@ -333,13 +351,20 @@ class LightUpApp {
       }
     });
 
-    // Touch support: Smooth GPU Pinch-to-Zoom & Real-time Pan anywhere on board/container
+    // Touch support: Natural iPad single-finger drag anywhere & GPU multi-touch pinch-to-zoom
     if (this.boardContainer) {
       this.boardContainer.addEventListener('touchstart', (e) => {
+        // Cancel any momentum animation running
+        if (this.momentumRaf) {
+          cancelAnimationFrame(this.momentumRaf);
+          this.momentumRaf = null;
+        }
+
         if (e.touches && e.touches.length >= 2) {
           // Two fingers: initiates fluid multi-touch pinch & pan
           this.isPinching = true;
-          this.isPanning = false;
+          this.isTouchPanning = false;
+          this.touchTargetCell = null;
           this.isMouseDown = false;
           this.dragAction = null;
           this.lastDragCell = null;
@@ -357,25 +382,42 @@ class LightUpApp {
 
         if (e.touches && e.touches.length === 1) {
           const touch = e.touches[0];
+          this.touchStartTime = Date.now();
+          this.touchStartX = touch.clientX;
+          this.touchStartY = touch.clientY;
+          this.lastTouchX = touch.clientX;
+          this.lastTouchY = touch.clientY;
+          this.lastTouchTime = this.touchStartTime;
+          this.touchVelocityX = 0;
+          this.touchVelocityY = 0;
+          this.isTouchPanning = false;
+
+          this.panStartScrollLeft = this.boardContainer.scrollLeft;
+          this.panStartScrollTop = this.boardContainer.scrollTop;
+
+          // Check if touch landed on a cell
           const el = document.elementFromPoint(touch.clientX, touch.clientY);
           const cell = el ? el.closest('.cell') : null;
-          let isWhiteCell = false;
+          let cellData = null;
           if (cell && cell.dataset.r !== undefined && cell.dataset.c !== undefined) {
             const r = parseInt(cell.dataset.r, 10);
             const c = parseInt(cell.dataset.c, 10);
             if (!isNaN(r) && !isNaN(c) && this.board[r] && this.board[r][c] === -1) {
-              isWhiteCell = true;
+              cellData = { r, c };
             }
           }
 
-          // Single finger pan if Pan tool is active OR touch is on wall or background
-          if (this.settings.drawStyle === 'pan' || !isWhiteCell) {
-            this.isPanning = true;
-            this.panStartX = touch.clientX;
-            this.panStartY = touch.clientY;
-            this.panStartScrollLeft = this.boardContainer.scrollLeft;
-            this.panStartScrollTop = this.boardContainer.scrollTop;
-            if (document.body) document.body.classList.add('is-panning');
+          if (this.settings.touchDragToPan) {
+            // Standard iPad behavior: any touch can pan if dragged; taps toggle cell
+            this.touchTargetCell = cellData;
+          } else {
+            // Drag-to-draw fallback if user toggles off touchDragToPan
+            if (this.settings.drawStyle === 'pan' || !cellData) {
+              this.isPanning = true;
+              this.panStartX = touch.clientX;
+              this.panStartY = touch.clientY;
+              if (document.body) document.body.classList.add('is-panning');
+            }
           }
         }
       }, { passive: false });
@@ -385,7 +427,8 @@ class LightUpApp {
           // Multi-touch pinch & pan active
           if (e.cancelable) e.preventDefault();
           this.isPinching = true;
-          this.isPanning = false;
+          this.isTouchPanning = false;
+          this.touchTargetCell = null;
           this.isMouseDown = false;
           this.dragAction = null;
           this.lastDragCell = null;
@@ -424,31 +467,59 @@ class LightUpApp {
           return;
         }
 
-        // Single-finger panning
-        if (this.isPanning && e.touches && e.touches.length === 1) {
-          if (e.cancelable) e.preventDefault();
+        // Single-finger touch handling
+        if (e.touches && e.touches.length === 1) {
           const touch = e.touches[0];
-          const dx = touch.clientX - this.panStartX;
-          const dy = touch.clientY - this.panStartY;
-          this.boardContainer.scrollLeft = this.panStartScrollLeft - dx;
-          this.boardContainer.scrollTop = this.panStartScrollTop - dy;
-          return;
-        }
 
-        if (this.isPinching) return;
-        if (this.settings.drawStyle === 'pan') return;
+          // Track velocity for kinetic momentum
+          const now = Date.now();
+          const dt = now - this.lastTouchTime;
+          if (dt > 0 && dt < 100) {
+            this.touchVelocityX = (touch.clientX - this.lastTouchX) / dt;
+            this.touchVelocityY = (touch.clientY - this.lastTouchY) / dt;
+          }
+          this.lastTouchX = touch.clientX;
+          this.lastTouchY = touch.clientY;
+          this.lastTouchTime = now;
 
-        // Single-finger drawing drag with precision hitbox
-        if (!this.isMouseDown || !this.dragAction) return;
-        const touch = e.touches[0];
-        if (!touch) return;
-        const el = document.elementFromPoint(touch.clientX, touch.clientY);
-        const cell = el ? el.closest('.cell') : null;
-        if (cell && cell.dataset.r !== undefined && cell.dataset.c !== undefined) {
-          const r = parseInt(cell.dataset.r, 10);
-          const c = parseInt(cell.dataset.c, 10);
-          if (!isNaN(r) && !isNaN(c)) {
-            this.handleDragMove(touch.clientX, touch.clientY, cell, r, c);
+          if (this.settings.touchDragToPan) {
+            const totalDist = Math.hypot(touch.clientX - this.touchStartX, touch.clientY - this.touchStartY);
+            // Once finger moves > 7px, enter pan mode and cancel tap
+            if (totalDist > 7 || this.isTouchPanning) {
+              this.isTouchPanning = true;
+              this.touchTargetCell = null;
+              if (e.cancelable) e.preventDefault();
+
+              const dx = touch.clientX - this.touchStartX;
+              const dy = touch.clientY - this.touchStartY;
+              this.boardContainer.scrollLeft = this.panStartScrollLeft - dx;
+              this.boardContainer.scrollTop = this.panStartScrollTop - dy;
+              return;
+            }
+            return;
+          }
+
+          // Fallback legacy drag (only when touchDragToPan is disabled)
+          if (this.isPanning) {
+            if (e.cancelable) e.preventDefault();
+            const dx = touch.clientX - this.panStartX;
+            const dy = touch.clientY - this.panStartY;
+            this.boardContainer.scrollLeft = this.panStartScrollLeft - dx;
+            this.boardContainer.scrollTop = this.panStartScrollTop - dy;
+            return;
+          }
+
+          if (this.isPinching || this.settings.drawStyle === 'pan') return;
+
+          if (!this.isMouseDown || !this.dragAction) return;
+          const el = document.elementFromPoint(touch.clientX, touch.clientY);
+          const cell = el ? el.closest('.cell') : null;
+          if (cell && cell.dataset.r !== undefined && cell.dataset.c !== undefined) {
+            const r = parseInt(cell.dataset.r, 10);
+            const c = parseInt(cell.dataset.c, 10);
+            if (!isNaN(r) && !isNaN(c)) {
+              this.handleDragMove(touch.clientX, touch.clientY, cell, r, c);
+            }
           }
         }
       }, { passive: false });
@@ -477,6 +548,46 @@ class LightUpApp {
         return;
       }
 
+      // Check for tap when touchDragToPan is active
+      if (this.settings.touchDragToPan) {
+        if (!this.isTouchPanning && this.touchTargetCell) {
+          const { r, c } = this.touchTargetCell;
+          this.touchTargetCell = null;
+          if (e.cancelable) e.preventDefault();
+          this.handleTouchCellTap(r, c);
+          return;
+        }
+
+        if (this.isTouchPanning) {
+          this.isTouchPanning = false;
+          this.touchTargetCell = null;
+
+          // Apply kinetic momentum deceleration
+          const speed = Math.hypot(this.touchVelocityX, this.touchVelocityY);
+          if (speed > 0.15) {
+            let vx = this.touchVelocityX * 14;
+            let vy = this.touchVelocityY * 14;
+            const friction = 0.92;
+
+            const stepMomentum = () => {
+              if (Math.abs(vx) < 0.5 && Math.abs(vy) < 0.5) {
+                this.momentumRaf = null;
+                return;
+              }
+              if (this.boardContainer) {
+                this.boardContainer.scrollLeft -= vx;
+                this.boardContainer.scrollTop -= vy;
+              }
+              vx *= friction;
+              vy *= friction;
+              this.momentumRaf = requestAnimationFrame(stepMomentum);
+            };
+            this.momentumRaf = requestAnimationFrame(stepMomentum);
+          }
+          return;
+        }
+      }
+
       if (this.isPanning) {
         this.isPanning = false;
         if (document.body) document.body.classList.remove('is-panning');
@@ -497,7 +608,7 @@ class LightUpApp {
       this.isMouseDown = false;
       this.dragAction = null;
       this.lastDragCell = null;
-    });
+    }, { passive: false });
 
     window.addEventListener('beforeunload', () => {
       this.saveCurrentState();
@@ -559,6 +670,7 @@ class LightUpApp {
     });
     bindToggle('settingBlueLight', 'blueLight', () => this.applyTheme());
     bindToggle('settingPrecisionDrag', 'precisionDrag');
+    bindToggle('settingTouchDragToPan', 'touchDragToPan');
     bindToggle('settingAutoCross', 'autoCross');
     bindToggle('settingGrayCompleted', 'grayCompleted', () => this.renderBoard());
     bindToggle('settingMarkErrors', 'markErrors', () => this.renderBoard());
@@ -1019,8 +1131,48 @@ class LightUpApp {
     return 'progress';
   }
 
+  handleTouchCellTap(r, c) {
+    if (this.isPaused || this.isSolved) return;
+    if (!this.board[r] || this.board[r][c] !== -1) return;
+
+    this.justHandledTouchTap = true;
+    setTimeout(() => { this.justHandledTouchTap = false; }, 350);
+
+    this.focusedCell = { r, c };
+    const key = `${r},${c}`;
+    const drawStyle = this.settings.drawStyle;
+
+    if (drawStyle === 'cycle') {
+      if (!this.bulbs.has(key) && !this.crosses.has(key)) {
+        this.setCellState(r, c, 'bulb');
+      } else if (this.bulbs.has(key)) {
+        this.setCellState(r, c, 'cross');
+      } else {
+        this.setCellState(r, c, 'empty');
+      }
+    } else if (drawStyle === 'bulb') {
+      if (this.bulbs.has(key)) {
+        this.setCellState(r, c, 'empty');
+      } else {
+        this.setCellState(r, c, 'bulb');
+      }
+    } else if (drawStyle === 'cross') {
+      if (this.crosses.has(key)) {
+        this.setCellState(r, c, 'empty');
+      } else {
+        this.setCellState(r, c, 'cross');
+      }
+    } else if (drawStyle === 'erase') {
+      this.setCellState(r, c, 'empty');
+    }
+  }
+
   handleCellMouseDown(e, r, c) {
     if (this.isPaused || this.isSolved) return;
+    if (this.justHandledTouchTap) {
+      this.justHandledTouchTap = false;
+      return;
+    }
     if (this.settings.drawStyle === 'pan' || this.isSpacePressed) {
       if (e) e.preventDefault();
       this.isPanning = true;
