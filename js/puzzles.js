@@ -602,36 +602,6 @@ window.OFFLINE_PUZZLE_LIBRARY = [
     "puzzleID": "4953739"
   },
   {
-    "sizeIdx": 12,
-    "category": "special",
-    "difficulty": "weekly",
-    "title": "Special Weekly #12-1",
-    "width": 25,
-    "height": 25,
-    "task": "aBb2BcBaBfBaBcBBb2aBBBb1a1b1bBb2b3b0a0bBBBa2BBbBaBaBhBaBa1bBBBcBBBeBa1dBaBeB11bBe1a1b1fBb0aBeBB1fBBd11dBBf2BbBBb0bB0h1Bb1b0BbB0eBaBBa3aBBa0aBBaBeBB1f0e2bBe2fBb11a1eBBd2Be0aB0fBa0aBd1bBdBaBa1hBaBa2l1aBaBe0aBcBfB1fBcBaBbBa03bBb2aBaB0a1aBbBbBBaBcBBaBaBBc0BBBB1cBBa4aB2cBaBBeBcBBcBeBBaBf02aB0bBaB0aBbBBaB1f1a1bBcBBBdBBBcBbBa2bBaBeBj1eBaBaBBaBa2bBb1a0b2aBbBb0aBaBBBBaBa1bBbBaBb0a0b3bBaBaBBaBaBe0jBeBaBb1a1bBcB00dBB2cBb1aBfBBaB2b0aBBa1bBBaB1fBa0BeBcBBcBeB0aBcBBa1aBBcBBBBBBcB1aBaB1cBaBBbBbBa2aBBa3aBbBbB1aBbBa3c1fBBfBcBa1eBaBaBl0aBa1h1a2a1dBb1d2aBaBf11aBeB0dB1e0aB0bBf0eBb1eBfBB0e0aB1aBaB1a2aB1a2eBBbB0bBbB0hBBb2b1BbBBfB1d01dBBf2BBe3aBbBfBbBaBeBb2B1eBa0d1a3eB1BcBBBbBaBa1hBaBaBbBB2aBBBb1aBbBbBb0bBb1a2bBBBa1bBBc1aBfBaBcBBb1a",
-    "puzzleID": "12-1"
-  },
-  {
-    "sizeIdx": 13,
-    "category": "special",
-    "difficulty": "daily",
-    "title": "Special Daily #13-1",
-    "width": 30,
-    "height": 30,
-    "task": "bBa2aB1a1Bb1h0bBBaBaBcBcBdBbBcBk3k2a2b2dBb2a2Bb3cBb2BBBaBB2bBa1BbBcBdBBb1e0eBBeBBbBbBb0h1eB12gBaBb0a1cBBbBa2dBc01bB1bBd3b1bBbBBc1bBdBbBbBbBbBc4b1BcBbBa1b2aBeBjBcBbBl0Ba0b2aBb1bBfB0bB1f0gBf1a1gB0BfBcBd01Bd1aBdBa0cBdBa3Bc0BaBBbBa1Bc2bBb3c3dBcBbBbBcBBaBbBBaBBcB1a0d1cBa3d1aBdB10d0c2f1BBg2a1fBgBfB0b11f1bBb1a0bBaBBl3b1c1j1eBaBbBa2b2cB1b1c0b2b2bBb2d1bBcBBb2bBb1dBbB1bBBc1d1aBbB0c1aBbBa1g110eBh0b1bBbB0eB3eBeBbB0d1cBbB2aBbBBBa2BB1b1c2bBBaBb1d0b1a2kBk1cBbBdBcBc3aBa2Bb0h1bB2aBBa1aBb",
-    "puzzleID": "13-1"
-  },
-  {
-    "sizeIdx": 14,
-    "category": "special",
-    "difficulty": "monthly",
-    "title": "Special Monthly #14-1",
-    "width": 30,
-    "height": 30,
-    "task": "a0B1aB0d1b1bBBB0BBbBb1dBBaBBBdBaBBB1gBB0bBB2gBB1Ba1dBa2aBc2BbB2aBaBb0aBaB1bBBcBaBa1aBcBc2bBcBBfBBc0bBc3cBdB0eBBBbBbBBbBbBBBeBBgBBbBBdBB11aBBB0a0BB0d0Bb1Bd0B1h0fBBfBh0B1aBgBeBaBBd02aBeBg1a1B1bBaBBa1Bb1aB0bBBaBb1BaBBaBbBBBcBa21a2a2Ba1bBc0BcBbBa1Ba2aB0aBcBcBaBb2cBa2BdB1aBc2bBa1c4eBBBcBBb1dBBdBb3BcB1Bd01BaBbBBa0b2dBbBd2bBaBBbBaBBBBcBBbBaBBcBBaBb1a0BcBBaBbBBcBa2aBBB2dBc0bBbBbBcBd1B1Ba3aBhBaBBBlBBBaBhBB0bBc2bBaBbBa0bBaBbBaBbBcBbBBBBaBc0BBbBaBBBfBB1aBbBB0cBaBBBaBa4bBbB2BaBBa2dBaBBaBB3b0bBaBaBa1BbBBBa2c0BaBaBbBa1aBBcBaBB0b1BbBaBaBaBaBBrBBa0a1aBaBaBaBBa2cBBc1b21bBBbBcB1c1aB1a2b1BdBb0b2aBaBbBa3a1bBbBdBBd1cBhBbBBBBbBhBcBbB1bBBBbBa1b1b0aBBaBbBb0aBbBBBbBB1BbBBBbBa0bBbBaBBaBb0bBa3bBBBbBBbBcBhBb1B02bBhBc2dB0d3bBbBa1aBbBa2aBbBbBd0BbBaBBaBcB1cBbBBb0Bb1cBBc0aBBaBa1a2aBa1aBBrBBa2a1aBa2bBBbBBBa1cBBaBaBb1aBaBBc2aBB1bBBaBaBa3b1bBB1aBBa3d3aBBaBB1b0bBaBaBBBa4cBBBbBaBBBfBB1aBbBBBcBaBBB0bBc1b2aBbBaBb0a1bBaBbBc1bBBBhBaBBBlB2Ba0hBaBaBBB2d0cBb1b0b0cBdBB1BaBaBcB2bBaBBc11a1bBa1BcBBa0bBBcBB20aBbBBaBb0dBbBdBbBa2Bb1a0BBd1BBcBBb0d11d0bBBcBBBe1cBaBb1c1aBBd1Ba2cBbBa2c1cBaB2a3aBBa2bBcB0cBbBaBBaBaBBaBcBBBbBaB2aBBbBaBBbBBaBb02a0BaBb11Ba0gBeBaB2dB3aBeBg2a1B2hBfBBfBhBB1dBBbBBdBBBBaBBBBaBBBBd10bB0gBBe1B0bBbB2bBb2B1eBBdBcBc3b0cBBfBBcBbBc3cBaBa0aBcBBbBBaBa1bBa2a2BbB0c2a2a1dBaBBB1gBBBbBBBgBBBBaBd2B1aB0d0b3bBBBBBBbBb2dBBaBBBa",
-    "puzzleID": "14-1"
-  },
-  {
     "sizeIdx": 0,
     "category": "7x7",
     "difficulty": "easy",
@@ -2200,5 +2170,35 @@ window.OFFLINE_PUZZLE_LIBRARY = [
     "height": 25,
     "task": "Ba1eBhB1dB00aBb10c2b1a1fBcBd1B2Ba1BbB1bBcBBc2a2BcBdBe2iBBaBd1lBb1cBb2e2BaBa0aBdBfBc1cBBBBa1fBi0bBa2dBcBa2Bb00b1eBaBa0B1h01b1b10aBf0p2aBb2fB0aBB0hBdBb2Ba1BaBaBaB0a1Bb1dBhBBBaBBfBbBaBpBfBaB1b0bB1hB0Ba2aBeBb1Bb1Ba1cBdBa3bBi0f1aB1BBcBcBfBd1aBaBaB1e2bBcBb3lBdBa2Bi3e1d1cB0aBcBBcBb1BbBBa2BBBdBc1f0a0b3c10b1aBBBd00hBe0aB",
     "puzzleID": "8069185"
+  },
+  {
+    "sizeIdx": 13,
+    "category": "special",
+    "difficulty": "daily",
+    "title": "Special Daily #1",
+    "width": 30,
+    "height": 30,
+    "task": "BcBB2a1B1bBbB1b1a2dBB1Bb2BbBbBBBbBkBb1Bf1b1c20BB10B0aBm1BcBcBBc0B1cBf0BdB1BaBa0Bi2BbB0bBfBa0bBBeBcBcBb1d0Bi2BB1cBBaB1bBa2eBBcBaBfBcBdBaBcBBB0bBb3cBBaB1aBf0a2a3aB0cBBd2bBb1bBa0Bb0BoBBbBBBBj0bB1b0aBaBBaBaBBBi1dBcBaBb3a0aBe00a1hBBbBBBb3aBBaB1aBB1g0cBBn1Bc0gBBBa1BaBBaBbBBBbB2h2aBBe1aBa1bBaBc2dBiBBBaBaBBa2a1b20b0jBBBBbBBo2BbBBaBb0bBb2dBBcB1a2a3aBf0a2BaBBcBbBbBBBBc1aBd0cBf1aBcBBeBa0bB1aBBc100BiBBd0b0c0cBe1BbBa1fBbBBbBBiB1aBaBBBdB1f1c121cBBc0c2BmBaBBBBBBBBcBbBfBBb1kBbBBBbBbB1bBBBBd0a1bBBb3bBBBaBB0cB",
+    "puzzleID": "daily-1"
+  },
+  {
+    "sizeIdx": 12,
+    "category": "special",
+    "difficulty": "weekly",
+    "title": "Special Weekly #1",
+    "width": 30,
+    "height": 40,
+    "task": "BaBaBBBcBBaBb3aB0cBBBaBaBaBBBB2aB0aBBBa0BaBBBaB1aBBBBBaBbBBbBd1dBdBbB1bBaBa0aBBB1BbBd0bB1BB1aBaBd0aBg2BBBgBaBd2B1bB1cBfBcB1b1B3a2bBdBa0b1b2bBaBdBb2b0dBaBj1a3dBiBa10bBbBbBBaBhB2b0cBb11BBBBbBcBbB0aBBaBBaBaBbBbBBb0bBa0aBBaBBb1eBa0cBBc2a1e1bBaB11cBdBbBdBc1BBaBBd3aBaBBBfBBBa2aBdBBa1dBBaBBb02bBBaBBdBa1iBa20aBBaB1aBkBaBaBBaBd1BdBaB1aBaBbBc1bBBBBBfBBB1BbBcBBaBBaBBb0a1fBa2bBBa0BaBBa0bBBpB0bBaBBaBbBBpBBbBaBBaBBaBBbBaBf1aBbBBaB2aBBcBbBBBBBf0BBBBbBcBb2a1a2Ba2dB1d1aBBa2aBkBaB1aBBa0BaBiBaBdBBaBBbBBbBBaB0d1aBBdBa1aBBBfBBBa1aBdBBa2B2cBdBbBdBcBBBaBbBeBa3cB1c4aBeBbBBaBBaBaBbBbBBb2bBa1aB2aBBaBBbBc1b1B1BBBbBc2bB1h2aBBbBbBbBBa0i1dBaBjBaBdBb1b0d2aBb0b1bBa3dBbBaBB1b1Bc1f2c2Bb0B0dBa0gB0B1g0a0dBaBaBBBBBb0d0bBBBBBa0aBa2bB1b1dBdBdBb1BbBa3BBBBaB2aBBBaBBaBBBa3BaBBBBBaBaBaBBBcBBa1bBaBBcBBBaBaB",
+    "puzzleID": "weekly-1"
+  },
+  {
+    "sizeIdx": 14,
+    "category": "special",
+    "difficulty": "monthly",
+    "title": "Special Monthly #1",
+    "width": 40,
+    "height": 50,
+    "task": "a0B1aB0d1b1bBBB0BBbBb1dBBaBBBdBaBBB1gBB0bBB2gBB1Ba1dBa2aBc2BbB2aBaBb0aBaB1bBBcBaBa1aBcBc2bBcBBfBBc0bBc3cBdB0eBBBbBbBBbBbBBBeBBgBBbBBdBB11aBBB0a0BB0d0Bb1Bd0B1h0fBBfBh0B1aBgBeBaBBd02aBeBg1a1B1bBaBBa1Bb1aB0bBBaBb1BaBBaBbBBBcBa21a2a2Ba1bBc0BcBbBa1Ba2aB0aBcBcBaBb2cBa2BdB1aBc2bBa1c4eBBBcBBb1dBBdBb3BcB1Bd01BaBbBBa0b2dBbBd2bBaBBbBaBBBBcBBbBaBBcBBaBb1a0BcBBaBbBBcBa2aBBB2dBc0bBbBbBcBd1B1Ba3aBhBaBBBlBBBaBhBB0bBc2bBaBbBa0bBaBbBaBbBcBbBBBBaBc0BBbBaBBBfBB1aBbBB0cBaBBBaBa4bBbB2BaBBa2dBaBBaBB3b0bBaBaBa1BbBBBa2c0BaBaBbBa1aBBcBaBB0b1BbBaBaBaBaBBrBBa0a1aBaBaBaBBa2cBBc1b21bBBbBcB1c1aB1a2b1BdBb0b2aBaBbBa3a1bBbBdBBd1cBhBbBBBBbBhBcBbB1bBBBbBa1b1b0aBBaBbBb0aBbBBBbBB1BbBBBbBa0bBbBaBBaBb0bBa3bBBBbBBbBcBhBb1B02bBhBc2dB0d3bBbBa1aBbBa2aBbBbBd0BbBaBBaBcB1cBbBBb0Bb1cBBc0aBBaBa1a2aBa1aBBrBBa2a1aBa2bBBbBBBa1cBBaBaBb1aBaBBc2aBB1bBBaBaBa3b1bBB1aBBa3d3aBBaBB1b0bBaBaBBBa4cBBBbBaBBBfBB1aBbBBBcBaBBB0bBc1b2aBbBaBb0a1bBaBbBc1bBBBhBaBBBlB2Ba0hBaBaBBB2d0cBb1b0b0cBdBB1BaBaBcB2bBaBBc11a1bBa1BcBBa0bBBcBB20aBbBBaBb0dBbBdBbBa2Bb1a0BBd1BBcBBb0d11d0bBBcBBBe1cBaBb1c1aBBd1Ba2cBbBa2c1cBaB2a3aBBa2bBcB0cBbBaBBaBaBBaBcBBBbBaB2aBBbBaBBbBBaBb02a0BaBb11Ba0gBeBaB2dB3aBeBg2a1B2hBfBBfBhBB1dBBbBBdBBBBaBBBBaBBBBd10bB0gBBe1B0bBbB2bBb2B1eBBdBcBc3b0cBBfBBcBbBc3cBaBa0aBcBBbBBaBa1bBa2a2BbB0c2a2a1dBaBBB1gBBBbBBBgBBBBaBd2B1aB0d0b3bBBBBBBbBb2dBBaBBBa",
+    "puzzleID": "monthly-1"
   }
 ];

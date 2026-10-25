@@ -6,6 +6,8 @@
   <title>Gemini Light Up - Offline</title>
   <meta name="description" content="Play Gemini Light Up (Akari) puzzle game completely offline.">
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="alternate icon" type="image/png" href="icon-192.png">
   <meta name="theme-color" content="#2563eb">
   <!-- iOS PWA full-screen support -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -75,19 +77,22 @@
         <div class="nav-section-title">Special & Daily</div>
         <ul class="nav-list">
           <li class="nav-item" data-cat="daily">
-            <span>Today's Daily Challenge</span>
+            <span>Today's Daily (30x30)</span>
             <span class="badge">Daily</span>
           </li>
           <li class="nav-item" data-cat="special" data-diff="weekly">
-            <span>Special Weekly (25x25)</span>
+            <span>Special Weekly (30x40)</span>
           </li>
           <li class="nav-item" data-cat="special" data-diff="monthly">
-            <span>Special Monthly (30x30)</span>
+            <span>Special Monthly (40x50)</span>
           </li>
         </ul>
 
         <div class="nav-section-title">Tools & Custom</div>
         <ul class="nav-list">
+          <li class="nav-item" id="btnLeaderboard">
+            <span>🏆 Personal Best Times</span>
+          </li>
           <li class="nav-item" id="btnCustomPuzzle">
             <span>Custom Generator...</span>
           </li>
@@ -99,7 +104,7 @@
           </li>
         </ul>
 
-        <div class="site-version-badge">Version 1.5</div>
+        <div class="site-version-badge">Version 1.6</div>
       </div>
     </aside>
 
@@ -192,8 +197,10 @@
       <div class="board-container">
         <!-- Pause Overlay -->
         <div class="pause-overlay" id="pauseOverlay">
+          <div style="font-size:3rem; margin-bottom:8px;">⏸️</div>
           <h2>Game Paused</h2>
-          <button class="btn btn-primary" onclick="window.app.togglePause(false)">Resume</button>
+          <p style="color:var(--text-muted); margin-bottom:18px; max-width:320px; text-align:center; font-size:0.95rem;">Timer is stopped while you are away from the page.</p>
+          <button class="btn btn-primary" style="padding:10px 24px; font-size:1rem;" onclick="window.app.togglePause(false)">Resume Game</button>
         </div>
 
         <div class="board-viewport" id="boardViewport">
@@ -479,21 +486,75 @@
 
   <!-- Victory Modal -->
   <div class="modal-overlay" id="victoryModal">
-    <div class="modal-card victory-card">
+    <div class="modal-card victory-card" style="max-width:440px;">
       <div style="font-size:3rem; margin-bottom:8px;">💡🎉</div>
       <h2 class="victory-title">Puzzle Solved!</h2>
-      <p style="color:var(--text-muted);">Congratulations! All squares are illuminated and all clues are satisfied.</p>
+      <p style="color:var(--text-muted); margin-bottom:12px;">All squares are illuminated and all clues are satisfied.</p>
       
+      <!-- Personal Best / Top 10 Notification Banner -->
+      <div id="victoryRankBadge" style="display:none; margin-bottom:14px; padding:10px 14px; border-radius:var(--radius-md); font-weight:700; text-align:center;"></div>
+
       <div class="victory-stats">
         <div class="stat-box">
           <div class="stat-value" id="victoryTime">01:24</div>
           <div class="stat-label">Solve Time</div>
         </div>
+        <div class="stat-box" id="victoryBestBox" style="display:none;">
+          <div class="stat-value" id="victoryBestTime">00:58</div>
+          <div class="stat-label">Personal Best</div>
+        </div>
+      </div>
+
+      <!-- Mini Leaderboard for this category -->
+      <div id="victoryLeaderboardSection" style="margin-top:16px; text-align:left; border-top:1px solid var(--border-color); padding-top:12px;">
+        <div style="font-size:0.85rem; font-weight:700; margin-bottom:8px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Category Best Times</div>
+        <div id="victoryMiniLeaderboard"></div>
       </div>
 
       <div style="display:flex; justify-content:center; gap:12px; margin-top:20px;">
         <button class="btn" data-close-modal>Review Board</button>
         <button class="btn btn-primary" id="btnNextPuzzle">Next Puzzle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaderboard Modal -->
+  <div class="modal-overlay" id="leaderboardModal">
+    <div class="modal-card" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🏆 Personal Best Times</h3>
+        <button class="icon-btn" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom:14px;">
+          <label style="font-size:0.85rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:6px;">Select Puzzle Category:</label>
+          <select id="leaderboardCategorySelect" style="width:100%; padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-surface); color:var(--text-main); font-weight:600; font-size:0.95rem;">
+            <optgroup label="Standard Puzzles">
+              <option value="7x7_easy">7x7 Easy</option>
+              <option value="7x7_normal">7x7 Normal</option>
+              <option value="7x7_hard">7x7 Hard</option>
+              <option value="10x10_easy">10x10 Easy</option>
+              <option value="10x10_normal">10x10 Normal</option>
+              <option value="10x10_hard">10x10 Hard</option>
+              <option value="14x14_easy">14x14 Easy</option>
+              <option value="14x14_normal">14x14 Normal</option>
+              <option value="14x14_hard">14x14 Hard</option>
+              <option value="25x25_easy">25x25 Easy</option>
+              <option value="25x25_normal">25x25 Normal</option>
+              <option value="25x25_hard">25x25 Hard</option>
+            </optgroup>
+            <optgroup label="Special Challenges">
+              <option value="daily">Daily Challenge (30x30)</option>
+              <option value="special_weekly">Special Weekly (30x40)</option>
+              <option value="special_monthly">Special Monthly (40x50)</option>
+            </optgroup>
+          </select>
+        </div>
+        <div id="leaderboardListContainer" style="min-height: 180px;"></div>
+      </div>
+      <div class="modal-footer" style="justify-content:space-between;">
+        <button class="btn" id="btnClearCategoryLeaderboard" style="font-size:0.85rem; color:#ef4444;">Clear Records</button>
+        <button class="btn btn-primary" data-close-modal>Close</button>
       </div>
     </div>
   </div>

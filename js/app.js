@@ -115,8 +115,27 @@ class LightUpApp {
     document.getElementById('btnSaveCheckpoint').addEventListener('click', () => this.saveCheckpoint());
     document.getElementById('btnSettings').addEventListener('click', () => this.openModal('settingsModal'));
     document.getElementById('btnRules').addEventListener('click', () => this.openModal('rulesModal'));
+    document.getElementById('btnLeaderboard').addEventListener('click', () => this.openLeaderboardModal());
     document.getElementById('btnSidebarToggle').addEventListener('click', () => {
       document.getElementById('sidebar').classList.toggle('collapsed');
+    });
+
+    const lbSelect = document.getElementById('leaderboardCategorySelect');
+    if (lbSelect) {
+      lbSelect.addEventListener('change', (e) => this.renderLeaderboardModal(e.target.value));
+    }
+    const btnClearLb = document.getElementById('btnClearCategoryLeaderboard');
+    if (btnClearLb) {
+      btnClearLb.addEventListener('click', () => {
+        const cat = document.getElementById('leaderboardCategorySelect').value;
+        this.clearCategoryLeaderboard(cat);
+      });
+    }
+
+    // Auto-pause timer when user clicks out of the webpage / switches tabs
+    window.addEventListener('blur', () => this.handleWindowBlur());
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) this.handleWindowBlur();
     });
 
     // Action tools
@@ -457,17 +476,19 @@ class LightUpApp {
       }
     }
 
-    // Daily Challenge
+    // Daily Challenge (Authentic 30x30 grid)
     if (cat === 'daily') {
       const today = new Date().toISOString().slice(0, 10);
-      const seed = AkariGenerator.getSeedForDate(today);
-      const puzzle = AkariGenerator.generate(10, 10, 'normal', seed);
-      if (puzzle) {
+      const lib = window.OFFLINE_PUZZLE_LIBRARY || [];
+      const dailyMatches = lib.filter(p => p.category === 'special' && p.difficulty === 'daily');
+      if (dailyMatches.length > 0) {
+        const seed = AkariGenerator.getSeedForDate(today);
+        const p = dailyMatches[seed % dailyMatches.length];
         this.loadPuzzle({
-          width: 10,
-          height: 10,
-          task: puzzle.task,
-          title: `Daily Challenge (${today})`,
+          width: p.width,
+          height: p.height,
+          task: p.task,
+          title: `Daily Challenge (${today}) [30x30]`,
           puzzleID: today
         });
         this.saveCurrentState();
@@ -944,7 +965,14 @@ class LightUpApp {
   }
 
   handleKeyDown(e) {
-    if (this.isPaused || this.isSolved) return;
+    if (this.isPaused) {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        this.togglePause(false);
+      }
+      return;
+    }
+    if (this.isSolved) return;
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
     const { r, c } = this.focusedCell;
@@ -1064,6 +1092,10 @@ class LightUpApp {
     window.soundEngine.playVictory();
     this.triggerConfetti();
 
+    // Record personal leaderboard solve time
+    const recordResult = this.recordSolveTime(this.getLeaderboardCategoryKey(), this.timerSeconds, this.puzzleID);
+    this.updateVictoryLeaderboardUI(recordResult);
+
     document.getElementById('victoryTime').textContent = this.formatTime(this.timerSeconds);
     this.openModal('victoryModal');
     return true;
@@ -1120,6 +1152,10 @@ class LightUpApp {
     } catch (e) {
       console.warn('Error reading zoom state:', e);
     }
+    // Default initial zoom for large boards so they fit comfortably
+    if (this.width >= 40 || this.height >= 40) return 0.50;
+    if (this.width >= 30 || this.height >= 30) return 0.65;
+    if (this.width >= 25 || this.height >= 25) return 0.80;
     return 1.0;
   }
 
@@ -1186,6 +1222,169 @@ class LightUpApp {
     this.pauseOverlay.classList.toggle('active', this.isPaused);
     document.getElementById('btnPause').style.display = this.isPaused ? 'none' : 'inline-flex';
     document.getElementById('btnResume').style.display = this.isPaused ? 'inline-flex' : 'none';
+  }
+
+  handleWindowBlur() {
+    if (!this.isSolved && !this.isPaused && this.timerSeconds > 0) {
+      this.togglePause(true);
+    }
+  }
+
+  // Leaderboard Methods
+  getLeaderboardCategoryKey() {
+    if (this.currentCat === 'daily') return 'daily';
+    if (this.currentCat === 'special') return `special_${this.currentDiff}`;
+    return `${this.currentCat}_${this.currentDiff}`;
+  }
+
+  getLeaderboardData() {
+    try {
+      const raw = localStorage.getItem('akari_leaderboard');
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  saveLeaderboardData(data) {
+    try {
+      localStorage.setItem('akari_leaderboard', JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  recordSolveTime(catKey, timeSec, puzzleID) {
+    const data = this.getLeaderboardData();
+    if (!data[catKey]) data[catKey] = [];
+    const list = data[catKey];
+    const prevBest = list.length > 0 ? list[0].time : null;
+
+    const newRecord = {
+      time: timeSec,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      id: String(puzzleID || '')
+    };
+
+    list.push(newRecord);
+    list.sort((a, b) => a.time - b.time);
+    const rank = list.indexOf(newRecord) + 1;
+
+    if (list.length > 10) list.splice(10);
+    this.saveLeaderboardData(data);
+
+    const isNewBest = (rank === 1);
+    const isTop10 = (rank <= 10);
+    const diff = (prevBest !== null && isNewBest) ? (prevBest - timeSec) : null;
+
+    return {
+      rank,
+      isNewBest,
+      isTop10,
+      diff,
+      prevBest,
+      currentTime: timeSec,
+      records: list
+    };
+  }
+
+  updateVictoryLeaderboardUI(recordResult) {
+    const badgeEl = document.getElementById('victoryRankBadge');
+    const bestBox = document.getElementById('victoryBestBox');
+    const bestTimeEl = document.getElementById('victoryBestTime');
+    const miniLbEl = document.getElementById('victoryMiniLeaderboard');
+
+    if (bestBox && recordResult.records.length > 0) {
+      bestBox.style.display = 'block';
+      bestTimeEl.textContent = this.formatTime(recordResult.records[0].time);
+    }
+
+    if (badgeEl) {
+      if (recordResult.isNewBest) {
+        badgeEl.style.display = 'block';
+        badgeEl.style.background = '#fef3c7';
+        badgeEl.style.color = '#92400e';
+        badgeEl.style.border = '1px solid #f59e0b';
+        badgeEl.innerHTML = `🏆 NEW PERSONAL BEST! (#1 Record)${recordResult.diff && recordResult.diff > 0 ? `<br><span style="font-size:0.85rem; font-weight:600;">Beat your previous best by ${recordResult.diff}s!</span>` : ''}`;
+      } else if (recordResult.isTop10) {
+        badgeEl.style.display = 'block';
+        badgeEl.style.background = '#e0f2fe';
+        badgeEl.style.color = '#0369a1';
+        badgeEl.style.border = '1px solid #38bdf8';
+        badgeEl.innerHTML = `🎉 TOP 10 FINISH! Ranked #${recordResult.rank} on your leaderboard!`;
+      } else {
+        badgeEl.style.display = 'none';
+      }
+    }
+
+    if (miniLbEl) {
+      const top5 = recordResult.records.slice(0, 5);
+      if (top5.length === 0) {
+        miniLbEl.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem;">No records saved yet.</div>';
+      } else {
+        let html = '<table class="leaderboard-table">';
+        html += '<thead><tr><th>Rank</th><th>Time</th><th>Date</th></tr></thead><tbody>';
+        top5.forEach((rec, idx) => {
+          const rank = idx + 1;
+          const isCurrent = (rank === recordResult.rank && rec.time === recordResult.currentTime);
+          const medal = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : `#${rank}`));
+          html += `<tr class="${isCurrent ? 'highlight-row' : ''}">
+            <td><span class="rank-pill ${rank===1?'rank-gold':(rank===2?'rank-silver':(rank===3?'rank-bronze':'rank-other'))}">${medal}</span></td>
+            <td><strong>${this.formatTime(rec.time)}</strong></td>
+            <td style="color:var(--text-muted); font-size:0.8rem;">${rec.date}</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+        miniLbEl.innerHTML = html;
+      }
+    }
+  }
+
+  openLeaderboardModal(selectedCategory = null) {
+    const cat = selectedCategory || this.getLeaderboardCategoryKey();
+    const select = document.getElementById('leaderboardCategorySelect');
+    if (select) select.value = cat;
+    this.renderLeaderboardModal(cat);
+    this.openModal('leaderboardModal');
+  }
+
+  renderLeaderboardModal(catKey) {
+    const container = document.getElementById('leaderboardListContainer');
+    if (!container) return;
+    const data = this.getLeaderboardData();
+    const records = data[catKey] || [];
+
+    if (records.length === 0) {
+      container.innerHTML = `
+        <div class="leaderboard-empty">
+          <div style="font-size:2.2rem; margin-bottom:8px;">⏱️</div>
+          <div style="font-weight:600; margin-bottom:4px;">No records yet for this category</div>
+          <div style="font-size:0.85rem;">Complete a puzzle to establish your first personal best!</div>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '<table class="leaderboard-table">';
+    html += '<thead><tr><th>Rank</th><th>Time</th><th>Date</th><th>Puzzle ID</th></tr></thead><tbody>';
+    records.forEach((rec, idx) => {
+      const rank = idx + 1;
+      const medal = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : `#${rank}`));
+      html += `<tr>
+        <td><span class="rank-pill ${rank===1?'rank-gold':(rank===2?'rank-silver':(rank===3?'rank-bronze':'rank-other'))}">${medal}</span></td>
+        <td><strong>${this.formatTime(rec.time)}</strong></td>
+        <td style="color:var(--text-muted); font-size:0.8rem;">${rec.date}</td>
+        <td style="color:var(--text-muted); font-size:0.8rem; font-family:monospace;">#${rec.id || '—'}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  clearCategoryLeaderboard(catKey) {
+    if (!confirm('Are you sure you want to clear your best times for this category?')) return;
+    const data = this.getLeaderboardData();
+    delete data[catKey];
+    this.saveLeaderboardData(data);
+    this.renderLeaderboardModal(catKey);
   }
 
   formatTime(totalSec) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'light-up-offline-v8';
+const CACHE_NAME = 'light-up-offline-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   './js/puzzles.js',
   './js/app.js',
   './manifest.json',
+  './favicon.svg',
   './icon-192.png',
   './icon-512.png'
 ];

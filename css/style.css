@@ -1035,3 +1035,74 @@ input:checked + .slider:before {
     padding: 3px 6px;
   }
 }
+
+/* Leaderboard Styles */
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.leaderboard-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--border-color);
+  font-weight: 700;
+}
+
+.leaderboard-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+
+.leaderboard-table tr:last-child td {
+  border-bottom: none;
+}
+
+.leaderboard-table tr.highlight-row {
+  background: rgba(37, 99, 235, 0.12);
+  font-weight: 700;
+}
+
+.rank-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.rank-gold {
+  background: #fef08a;
+  color: #854d0e;
+}
+
+.rank-silver {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.rank-bronze {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.rank-other {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.leaderboard-empty {
+  text-align: center;
+  padding: 30px 10px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
