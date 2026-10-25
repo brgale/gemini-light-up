@@ -108,7 +108,7 @@
           </li>
         </ul>
 
-        <div class="site-version-badge">Version 2.2</div>
+        <div class="site-version-badge">Version 2.3</div>
       </div>
     </aside>
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
@@ -202,16 +202,16 @@
         <button class="hint-toast-close" id="btnHintClose">&times;</button>
       </div>
 
+      <!-- Pause Overlay (Fixed over board play area) -->
+      <div class="pause-overlay" id="pauseOverlay">
+        <div style="font-size:3rem; margin-bottom:8px;">⏸️</div>
+        <h2>Game Paused</h2>
+        <p style="color:var(--text-muted); margin-bottom:18px; max-width:320px; text-align:center; font-size:0.95rem;">Timer is stopped while you are away from the page.</p>
+        <button class="btn btn-primary" style="padding:10px 24px; font-size:1rem;" onclick="window.app.togglePause(false)">Resume Game</button>
+      </div>
+
       <!-- Game Board Container -->
       <div class="board-container" id="boardContainer">
-        <!-- Pause Overlay -->
-        <div class="pause-overlay" id="pauseOverlay">
-          <div style="font-size:3rem; margin-bottom:8px;">⏸️</div>
-          <h2>Game Paused</h2>
-          <p style="color:var(--text-muted); margin-bottom:18px; max-width:320px; text-align:center; font-size:0.95rem;">Timer is stopped while you are away from the page.</p>
-          <button class="btn btn-primary" style="padding:10px 24px; font-size:1rem;" onclick="window.app.togglePause(false)">Resume Game</button>
-        </div>
-
         <div class="board-viewport" id="boardViewport">
           <div class="board-title-info">
             <span id="puzzleTitle">7x7 Easy</span>

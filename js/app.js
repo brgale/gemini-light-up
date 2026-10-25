@@ -614,6 +614,19 @@ class LightUpApp {
       this.saveCurrentState();
     });
 
+    window.addEventListener('resize', () => {
+      if (this.boardContainer) {
+        const maxX = this.boardContainer.scrollWidth - this.boardContainer.clientWidth;
+        const maxY = this.boardContainer.scrollHeight - this.boardContainer.clientHeight;
+        if (maxX > 0) {
+          this.boardContainer.scrollLeft = Math.max(0, Math.min(maxX, this.boardContainer.scrollLeft));
+        }
+        if (maxY > 0) {
+          this.boardContainer.scrollTop = Math.max(0, Math.min(maxY, this.boardContainer.scrollTop));
+        }
+      }
+    });
+
     // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && !this.isSpacePressed && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && !this.isPaused) {
@@ -797,6 +810,10 @@ class LightUpApp {
     this.updateCheckpointsUI();
     this.renderBoard();
     this.applySavedZoom();
+    this.centerBoard();
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => this.centerBoard());
+    }
   }
 
   getPlayedTasks() {
@@ -962,6 +979,10 @@ class LightUpApp {
     this.updateCheckpointsUI();
     this.renderBoard();
     this.applySavedZoom();
+    this.centerBoard();
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => this.centerBoard());
+    }
   }
 
   renderBoard() {
@@ -1603,6 +1624,10 @@ class LightUpApp {
     this.resetTimer();
     this.startTimer();
     this.renderBoard();
+    this.centerBoard();
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => this.centerBoard());
+    }
     this.saveCurrentState();
   }
 
@@ -1662,6 +1687,18 @@ class LightUpApp {
     }
   }
 
+  centerBoard() {
+    if (!this.boardContainer) return;
+    const maxScrollLeft = this.boardContainer.scrollWidth - this.boardContainer.clientWidth;
+    const maxScrollTop = this.boardContainer.scrollHeight - this.boardContainer.clientHeight;
+    if (maxScrollLeft > 0) {
+      this.boardContainer.scrollLeft = Math.round(maxScrollLeft / 2);
+    }
+    if (maxScrollTop > 0) {
+      this.boardContainer.scrollTop = Math.round(maxScrollTop / 2);
+    }
+  }
+
   setZoom(scale, save = true) {
     this.zoomScale = Math.max(0.3, Math.min(2.5, scale));
     if (this.zoomSlider) this.zoomSlider.value = this.zoomScale;
@@ -1672,7 +1709,29 @@ class LightUpApp {
     if (this.boardViewport) {
       this.boardViewport.style.transform = '';
     }
-    if (this.boardEl && this.width && this.height) {
+
+    if (this.boardContainer && this.boardEl && this.width && this.height) {
+      const oldMaxX = this.boardContainer.scrollWidth - this.boardContainer.clientWidth;
+      const oldMaxY = this.boardContainer.scrollHeight - this.boardContainer.clientHeight;
+      const ratioX = oldMaxX > 0 ? this.boardContainer.scrollLeft / oldMaxX : 0.5;
+      const ratioY = oldMaxY > 0 ? this.boardContainer.scrollTop / oldMaxY : 0.5;
+
+      const showCoords = this.settings.showCoordinates;
+      const base = this.baseCellSize || Math.max(20, Math.min(56, Math.floor(540 / Math.max(this.width, this.height))));
+      const cellSize = Math.max(16, Math.round(base * this.zoomScale));
+      this.boardEl.style.setProperty('--cell-size', `${cellSize}px`);
+      this.boardEl.style.gridTemplateColumns = showCoords
+        ? `24px repeat(${this.width}, ${cellSize}px)`
+        : `repeat(${this.width}, ${cellSize}px)`;
+      this.boardEl.style.gridTemplateRows = showCoords
+        ? `24px repeat(${this.height}, ${cellSize}px)`
+        : `repeat(${this.height}, ${cellSize}px)`;
+
+      const newMaxX = this.boardContainer.scrollWidth - this.boardContainer.clientWidth;
+      const newMaxY = this.boardContainer.scrollHeight - this.boardContainer.clientHeight;
+      if (newMaxX > 0) this.boardContainer.scrollLeft = Math.round(ratioX * newMaxX);
+      if (newMaxY > 0) this.boardContainer.scrollTop = Math.round(ratioY * newMaxY);
+    } else if (this.boardEl && this.width && this.height) {
       const showCoords = this.settings.showCoordinates;
       const base = this.baseCellSize || Math.max(20, Math.min(56, Math.floor(540 / Math.max(this.width, this.height))));
       const cellSize = Math.max(16, Math.round(base * this.zoomScale));
@@ -1684,6 +1743,7 @@ class LightUpApp {
         ? `24px repeat(${this.height}, ${cellSize}px)`
         : `repeat(${this.height}, ${cellSize}px)`;
     }
+
     if (save) {
       this.saveZoomForCurrentSize(this.zoomScale);
     }
@@ -1696,6 +1756,10 @@ class LightUpApp {
 
   fitBoard() {
     this.setZoom(1.0, true);
+    this.centerBoard();
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => this.centerBoard());
+    }
   }
 
   // Timer controls
