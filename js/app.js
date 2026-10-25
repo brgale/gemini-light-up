@@ -33,6 +33,9 @@ class LightUpApp {
 
     // Zoom
     this.zoomScale = 1.0;
+    this.isPinching = false;
+    this.pinchStartDistance = null;
+    this.pinchStartZoom = 1.0;
 
     // Settings
     this.settings = {
@@ -108,6 +111,11 @@ class LightUpApp {
     this.zoomLevelLabel = document.getElementById('zoomLevelLabel');
     this.boardContainer = document.getElementById('boardContainer');
 
+    if (window.innerWidth <= 1024) {
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar) sidebar.classList.add('collapsed');
+    }
+
     this.updateToolButtons();
   }
 
@@ -124,6 +132,23 @@ class LightUpApp {
     document.getElementById('btnSidebarToggle').addEventListener('click', () => {
       document.getElementById('sidebar').classList.toggle('collapsed');
     });
+
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+    if (sidebarBackdrop) {
+      sidebarBackdrop.addEventListener('click', () => {
+        document.getElementById('sidebar').classList.add('collapsed');
+      });
+    }
+
+    const btnSidebarSettings = document.getElementById('btnSidebarSettings');
+    if (btnSidebarSettings) {
+      btnSidebarSettings.addEventListener('click', () => {
+        if (window.innerWidth <= 1024) {
+          document.getElementById('sidebar').classList.add('collapsed');
+        }
+        this.openModal('settingsModal');
+      });
+    }
 
     const lbSelect = document.getElementById('leaderboardCategorySelect');
     if (lbSelect) {
@@ -188,7 +213,7 @@ class LightUpApp {
         const cat = el.getAttribute('data-cat');
         const diff = el.getAttribute('data-diff') || 'easy';
         this.loadCategoryPuzzle(cat, diff, false);
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth <= 1024) {
           document.getElementById('sidebar').classList.add('collapsed');
         }
       });
@@ -252,23 +277,100 @@ class LightUpApp {
       }
     });
 
-    // Touch support for drag with precision hitbox
-    this.boardEl.addEventListener('touchmove', (e) => {
-      if (!this.isMouseDown || !this.dragAction) return;
-      const touch = e.touches[0];
-      if (!touch) return;
-      const el = document.elementFromPoint(touch.clientX, touch.clientY);
-      const cell = el ? el.closest('.cell') : null;
-      if (cell && cell.dataset.r !== undefined && cell.dataset.c !== undefined) {
-        const r = parseInt(cell.dataset.r, 10);
-        const c = parseInt(cell.dataset.c, 10);
-        if (!isNaN(r) && !isNaN(c)) {
-          this.handleDragMove(touch.clientX, touch.clientY, cell, r, c);
+    // Touch support for drag and multi-touch pinch to zoom anywhere on the board & container
+    if (this.boardContainer) {
+      this.boardContainer.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches.length >= 2) {
+          // Pinch-to-zoom initiated with 2 fingers: cancel single-finger cell drag immediately
+          this.isPinching = true;
+          this.isMouseDown = false;
+          this.dragAction = null;
+          this.lastDragCell = null;
+          const t1 = e.touches[0];
+          const t2 = e.touches[1];
+          this.pinchStartDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+          this.pinchStartZoom = this.zoomScale;
         }
-      }
-    }, { passive: true });
+      }, { passive: true });
+
+      this.boardContainer.addEventListener('touchmove', (e) => {
+        if (e.touches && e.touches.length >= 2) {
+          // Two-finger pinch active: zoom puzzle smoothly
+          if (e.cancelable) e.preventDefault();
+          this.isPinching = true;
+          this.isMouseDown = false;
+          this.dragAction = null;
+          this.lastDragCell = null;
+
+          const t1 = e.touches[0];
+          const t2 = e.touches[1];
+          const currentDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+          if (this.pinchStartDistance && this.pinchStartDistance > 0) {
+            const factor = currentDist / this.pinchStartDistance;
+            const targetZoom = Math.max(0.3, Math.min(2.5, Math.round(this.pinchStartZoom * factor * 100) / 100));
+            this.setZoom(targetZoom, false);
+          }
+          return;
+        }
+
+        if (this.isPinching) {
+          return;
+        }
+
+        // Single-finger drag with precision hitbox
+        if (!this.isMouseDown || !this.dragAction) return;
+        const touch = e.touches[0];
+        if (!touch) return;
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        const cell = el ? el.closest('.cell') : null;
+        if (cell && cell.dataset.r !== undefined && cell.dataset.c !== undefined) {
+          const r = parseInt(cell.dataset.r, 10);
+          const c = parseInt(cell.dataset.c, 10);
+          if (!isNaN(r) && !isNaN(c)) {
+            this.handleDragMove(touch.clientX, touch.clientY, cell, r, c);
+          }
+        }
+      }, { passive: false });
+
+      // Native Safari gesture events for iPad
+      this.boardContainer.addEventListener('gesturestart', (e) => {
+        e.preventDefault();
+        this.isPinching = true;
+        this.pinchStartZoom = this.zoomScale;
+        this.isMouseDown = false;
+        this.dragAction = null;
+        this.lastDragCell = null;
+      });
+      this.boardContainer.addEventListener('gesturechange', (e) => {
+        e.preventDefault();
+        if (this.isPinching && e.scale) {
+          const targetZoom = Math.max(0.3, Math.min(2.5, Math.round(this.pinchStartZoom * e.scale * 100) / 100));
+          this.setZoom(targetZoom, false);
+        }
+      });
+      this.boardContainer.addEventListener('gestureend', (e) => {
+        e.preventDefault();
+        if (this.isPinching) {
+          this.isPinching = false;
+          this.pinchStartDistance = null;
+          this.saveZoomForCurrentSize(this.zoomScale);
+        }
+      });
+    }
 
     window.addEventListener('touchend', (e) => {
+      if (this.isPinching) {
+        if (!e.touches || e.touches.length < 2) {
+          this.isPinching = false;
+          this.pinchStartDistance = null;
+          this.saveZoomForCurrentSize(this.zoomScale);
+        }
+        this.isMouseDown = false;
+        this.dragAction = null;
+        this.lastDragCell = null;
+        return;
+      }
+
       if (this.isMouseDown && this.dragAction && this.settings.precisionDrag && e && e.changedTouches && e.changedTouches[0]) {
         const touch = e.changedTouches[0];
         const el = document.elementFromPoint(touch.clientX, touch.clientY);

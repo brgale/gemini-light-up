@@ -240,15 +240,35 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
   z-index: 20;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-.header-left, .header-center, .header-right {
+.header-left {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 1;
+  min-width: 0;
+  justify-content: center;
 }
 
 .icon-btn {
@@ -429,6 +449,7 @@ body {
   background: var(--bg-primary);
   position: relative;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y pinch-zoom;
 }
 
 .board-viewport {
@@ -457,7 +478,7 @@ body {
   border-radius: 4px;
   box-shadow: var(--shadow-md);
   user-select: none;
-  touch-action: none;
+  touch-action: pinch-zoom;
 }
 
 /* Cell Styles */
@@ -1010,14 +1031,21 @@ input:checked + .slider:before {
   display: none;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
+/* Sidebar Backdrop (for Mobile & Tablet Drawer) */
+.sidebar-backdrop {
+  display: none;
+}
+
+/* Responsive adjustments for Tablets & Mobile (iPad Portrait/Landscape, Phones) */
+@media (max-width: 1024px) {
   .sidebar {
     position: fixed;
     top: 0;
     bottom: 0;
     left: 0;
+    z-index: 50;
     box-shadow: var(--shadow-lg);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .sidebar:not(.collapsed) {
     transform: translateX(0);
@@ -1026,15 +1054,87 @@ input:checked + .slider:before {
     transform: translateX(-100%);
     margin-left: 0;
   }
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 45;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .sidebar:not(.collapsed) + .sidebar-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
   .top-header {
     padding: 0 10px;
+    gap: 6px;
   }
   .tool-btn span {
-    display: none;
+    display: none; /* Icon-only tools saves 170px of header width */
+  }
+  .tool-btn {
+    padding: 6px 8px;
+  }
+  .tool-group {
+    padding: 2px;
   }
   .timer-container {
     font-size: 0.95rem;
     padding: 3px 6px;
+    gap: 5px;
+  }
+  .board-container {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 850px) {
+  /* On iPad portrait and narrower screens, hide slider input track so Settings is never cramped */
+  .zoom-slider-row input[type="range"] {
+    display: none;
+  }
+  .zoom-control-container {
+    flex-direction: row;
+    gap: 4px;
+  }
+  .zoom-level-label {
+    min-width: 32px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .top-header {
+    padding: 0 6px;
+    gap: 4px;
+  }
+  .header-left, .header-right {
+    gap: 4px;
+  }
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+  .icon-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  .tool-btn {
+    padding: 4px 6px;
+  }
+  .timer-container {
+    font-size: 0.85rem;
+    padding: 2px 4px;
+    gap: 3px;
+  }
+  .zoom-control-container {
+    display: none; /* On phones, pinch-to-zoom is the primary zoom */
   }
 }
 

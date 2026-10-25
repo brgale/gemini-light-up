@@ -1,4 +1,4 @@
-# Gemini Light Up - Offline Edition (Version 1.9)
+# Gemini Light Up - Offline Edition (Version 2.0)
 
 A fully featured, standalone, 100% offline version of the popular logic puzzle game **Light Up** (also known as **Akari**, Japanese: 美術館), inspired by [puzzle-light-up.com](https://www.puzzle-light-up.com/).
 
@@ -24,6 +24,10 @@ Zero internet connection or external servers required. Works completely out of t
   - Automatically generates unlimited new puzzles of any dimensions with rotational symmetry and guaranteed unique solutions.
 - **Personal Leaderboard**:
   - Tracks top 10 best times per puzzle size & difficulty with medals, rank badges, and new record notifications.
+- **Multi-Touch Pinch-to-Zoom Anywhere**:
+  - Full two-finger pinch to zoom anywhere on the board or screen (including directly on puzzle cells) with smooth layout scaling and zero accidental bulb placement.
+- **Responsive Tablet & Mobile Optimization**:
+  - Adaptive header with fixed Settings access, icon-only tool grouping, overlay drawer sidebar with backdrop, and high-visibility controls across iPad portrait, landscape, and phone screens.
 - **Precision Drag (Corner Protection)**:
   - Smart center-proximity hitbox filters out accidental diagonal square selection when sweeping around numbers in an arc (with toggle in Settings).
 - **Smart Pause & Auto-Resume**:
