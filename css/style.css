@@ -188,8 +188,22 @@ body {
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+.nav-item svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  flex-shrink: 0;
+  opacity: 0.85;
+  vertical-align: middle;
+}
+
 .nav-item:hover {
   background: var(--cell-hover);
+}
+
+.nav-item:hover svg,
+.nav-item.active svg {
+  opacity: 1;
 }
 
 .nav-item.active {

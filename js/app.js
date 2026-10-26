@@ -846,6 +846,55 @@ class LightUpApp {
     } catch (e) {}
   }
 
+  getNextLibraryPuzzle(cat, diff) {
+    const lib = window.OFFLINE_PUZZLE_LIBRARY || [];
+    const matches = lib.filter(p => {
+      if (cat === 'special') return p.category === 'special' && p.difficulty === diff;
+      return p.category === cat && p.difficulty === diff;
+    });
+
+    if (!matches || matches.length === 0) return null;
+    if (matches.length === 1) return matches[0];
+
+    const deckKey = `akari_deck_${cat}_${diff}`;
+    let deck = [];
+    try {
+      const raw = localStorage.getItem(deckKey);
+      if (raw) deck = JSON.parse(raw);
+    } catch (e) {
+      deck = [];
+    }
+
+    if (Array.isArray(deck)) {
+      deck = deck.filter(i => typeof i === 'number' && i >= 0 && i < matches.length);
+    } else {
+      deck = [];
+    }
+
+    // If deck is exhausted or uninitialized, generate a new Fisher-Yates shuffled deck
+    if (deck.length === 0) {
+      const indices = [];
+      for (let i = 0; i < matches.length; i++) indices.push(i);
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+      // Prevent immediate repeat of current puzzle across reshuffles
+      if (matches[indices[indices.length - 1]] && matches[indices[indices.length - 1]].task === this.task && indices.length > 1) {
+        const top = indices.pop();
+        indices.unshift(top);
+      }
+      deck = indices;
+    }
+
+    const chosenIdx = deck.pop();
+    try {
+      localStorage.setItem(deckKey, JSON.stringify(deck));
+    } catch (e) {}
+
+    return matches[chosenIdx];
+  }
+
   loadCategoryPuzzle(cat, diff, forceNew = false) {
     // Save current active category before switching
     if (this.task && this.board && this.board.length > 0) {
@@ -909,19 +958,9 @@ class LightUpApp {
       }
     }
 
-    // Try finding in built-in library
-    const lib = window.OFFLINE_PUZZLE_LIBRARY || [];
-    const matches = lib.filter(p => {
-      if (cat === 'special') return p.category === 'special' && p.difficulty === diff;
-      return p.category === cat && p.difficulty === diff;
-    });
-
-    const played = this.getPlayedTasks();
-    let unplayed = matches.filter(p => !played.has(p.task) && p.task !== this.task);
-
-    // If unplayed library puzzles exist, use them
-    if (unplayed.length > 0) {
-      const p = unplayed[Math.floor(Math.random() * unplayed.length)];
+    // Use guaranteed Non-Repeating Shuffle Deck for authentic library puzzles
+    const p = this.getNextLibraryPuzzle(cat, diff);
+    if (p) {
       this.loadPuzzle({
         width: p.width,
         height: p.height,
@@ -934,7 +973,7 @@ class LightUpApp {
       return;
     }
 
-    // If all cached puzzles were played (or none available), generate fresh on the fly!
+    // Procedural generation fallback if no library puzzle exists
     const [w, h] = cat === '7x7' ? [7, 7] : (cat === '10x10' ? [10, 10] : (cat === '14x14' ? [14, 14] : [25, 25]));
     const gen = AkariGenerator.generate(w, h, diff);
     if (gen) {
@@ -946,22 +985,6 @@ class LightUpApp {
         puzzleID: Math.floor(Math.random() * 9000000 + 1000000)
       });
       this.markTaskPlayed(gen.task);
-      this.saveCurrentState();
-      return;
-    }
-
-    // Recycling fallback if generation took too long (e.g. on 25x25)
-    if (matches.length > 0) {
-      const otherMatches = matches.filter(m => m.task !== this.task);
-      const pool = otherMatches.length > 0 ? otherMatches : matches;
-      const p = pool[Math.floor(Math.random() * pool.length)];
-      this.loadPuzzle({
-        width: p.width,
-        height: p.height,
-        task: p.task,
-        title: p.title || `${cat.toUpperCase()} ${diff.toUpperCase()}`,
-        puzzleID: p.puzzleID || Math.floor(Math.random() * 9000000 + 1000000)
-      });
       this.saveCurrentState();
     }
   }
@@ -1680,7 +1703,27 @@ class LightUpApp {
       }
     }
 
-    // For 25x25 or fallback, load an unplayed authentic puzzle from the library
+    // For 25x25 or if procedural generator falls back, draw from guaranteed non-repeating shuffle deck
+    const nextPuz = this.getNextLibraryPuzzle(this.currentCat, this.currentDiff);
+    if (nextPuz) {
+      this.loadPuzzle({
+        width: nextPuz.width,
+        height: nextPuz.height,
+        task: nextPuz.task,
+        title: nextPuz.title || `${this.currentCat.toUpperCase()} ${this.currentDiff.toUpperCase()}`,
+        puzzleID: nextPuz.puzzleID || Math.floor(Math.random() * 9000000 + 1000000)
+      });
+      this.markTaskPlayed(nextPuz.task);
+      this.saveCurrentState();
+      if (announce && this.hintMessageEl && this.hintToastEl) {
+        this.hintMessageEl.textContent = `✨ Loaded new ${this.currentCat} ${this.currentDiff} puzzle!`;
+        this.hintToastEl.classList.add('show');
+        setTimeout(() => this.hintToastEl.classList.remove('show'), 2500);
+      }
+      return;
+    }
+
+    // Ultimate fallback
     this.loadCategoryPuzzle(this.currentCat, this.currentDiff, true);
     if (announce && this.hintMessageEl && this.hintToastEl) {
       this.hintMessageEl.textContent = `✨ Loaded new ${this.currentCat} ${this.currentDiff} puzzle!`;
