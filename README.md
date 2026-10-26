@@ -1,4 +1,4 @@
-# Gemini Light Up - Offline Edition (Version 2.3)
+# Gemini Light Up - Offline Edition (Version 2.4)
 
 A fully featured, standalone, 100% offline version of the popular logic puzzle game **Light Up** (also known as **Akari**, Japanese: 美術館), inspired by [puzzle-light-up.com](https://www.puzzle-light-up.com/).
 
@@ -17,11 +17,19 @@ Zero internet connection or external servers required. Works completely out of t
   - **Special Daily** (30×30)
   - **Special Weekly** (30×40)
   - **Special Monthly** (40×50)
-- **Built-in Library of 220+ Authentic Puzzles**: Instantly playable without generating.
+- **Built-in Library of 316+ Authentic Puzzles**: Instantly playable without generating.
+- **Generate Puzzles at Will (Unlimited Combinations)**:
+  - Generate fresh, uniquely seeded puzzles on-demand with one tap using the **"🎲 Generate Fresh Puzzle"** sidebar button, the **"New Puzzle"** bottom action, or the `[N]` keyboard shortcut.
+  - Generates authentic rotational symmetric boards with guaranteed unique solutions in under 200ms.
+  - Millions of possible puzzle configurations make duplicate games practically impossible.
+- **Intelligent Clue Error Highlighting (Surrounded by Light Rays)**:
+  - Numbered clue squares immediately turn glowing vibrant red if their adjacent cells are blocked by light beams or crosses such that their required number cannot mathematically be met.
+  - Also warns when too many bulbs are placed around a clue, helping you quickly spot contradictions before committing.
+- **Smart Category Resumption & Duplicate Prevention**:
+  - Re-selecting a category in the sidebar automatically spins up a brand new puzzle if the previous one was already solved, rather than reopening completed boards.
+  - Persistent tracking of played puzzles ensures you never encounter repeats from the library.
 - **Daily, Weekly, and Monthly Challenges**:
   - Authentic large format special puzzles for every challenge period!
-- **Procedural Offline Generator**:
-  - Automatically generates unlimited new puzzles of any dimensions with rotational symmetry and guaranteed unique solutions.
 - **Personal Leaderboard**:
   - Tracks top 10 best times per puzzle size & difficulty with medals, rank badges, and new record notifications.
 - **Canvas Overscroll Buffers & Edge Centering (No Hard Stops)**:

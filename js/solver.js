@@ -376,6 +376,22 @@ class AkariSolver {
       }
     }
 
+    // Calculate illuminated cells from current bulbs
+    const litMap = new Set();
+    const losDirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+    for (const b of userBulbs) {
+      const [br, bc] = b.split(',').map(Number);
+      litMap.add(`${br},${bc}`);
+      for (const [dr, dc] of losDirs) {
+        let nr = br + dr, nc = bc + dc;
+        while (nr >= 0 && nr < this.h && nc >= 0 && nc < this.w && this.board[nr][nc] === -1) {
+          litMap.add(`${nr},${nc}`);
+          nr += dr;
+          nc += dc;
+        }
+      }
+    }
+
     // 2. Check clue overloads / errors
     for (let r = 0; r < this.h; r++) {
       for (let c = 0; c < this.w; c++) {
@@ -383,7 +399,8 @@ class AkariSolver {
         if (clue >= 0) {
           const adj = this.getAdjWhite(r, c);
           const bulbs = adj.filter(p => userBulbs.has(p.key));
-          const available = adj.filter(p => !userCrosses.has(p.key));
+          // Squares available for a bulb: must not be crossed, AND if not already a bulb, must not be illuminated by another bulb!
+          const available = adj.filter(p => userBulbs.has(p.key) || (!userCrosses.has(p.key) && !litMap.has(p.key)));
           if (bulbs.length > clue) {
             return {
               type: 'error',
@@ -396,7 +413,7 @@ class AkariSolver {
             return {
               type: 'error',
               r, c,
-              message: `Number ${clue} at (${r + 1}, ${c + 1}) cannot be satisfied because too many adjacent squares are marked X.`
+              message: `Number ${clue} at (${r + 1}, ${c + 1}) cannot be satisfied because surrounding squares are blocked or illuminated by other light paths.`
             };
           }
         }

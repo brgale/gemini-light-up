@@ -232,7 +232,17 @@ class LightUpApp {
     document.getElementById('btnCheckDone').addEventListener('click', () => this.checkSolution(true));
     document.getElementById('btnHint').addEventListener('click', () => this.giveHint());
     document.getElementById('btnStartOver').addEventListener('click', () => this.startOver());
-    document.getElementById('btnNewPuzzle').addEventListener('click', () => this.newRandomPuzzle());
+    document.getElementById('btnNewPuzzle').addEventListener('click', () => this.newRandomPuzzle(true));
+    const btnSidebarGen = document.getElementById('btnSidebarGenerate');
+    if (btnSidebarGen) {
+      btnSidebarGen.addEventListener('click', () => {
+        this.newRandomPuzzle(true);
+        if (window.innerWidth <= 1024) {
+          const sidebar = document.getElementById('sidebar');
+          if (sidebar) sidebar.classList.add('collapsed');
+        }
+      });
+    }
     document.getElementById('btnPrint').addEventListener('click', () => window.print());
     document.getElementById('btnShare').addEventListener('click', () => this.openShareModal());
     document.getElementById('btnImportExport').addEventListener('click', () => this.openImportModal());
@@ -831,7 +841,7 @@ class LightUpApp {
       const set = this.getPlayedTasks();
       set.add(task);
       const arr = Array.from(set);
-      if (arr.length > 1000) arr.splice(0, arr.length - 1000);
+      if (arr.length > 10000) arr.splice(0, arr.length - 10000);
       localStorage.setItem('akari_played_tasks', JSON.stringify(arr));
     } catch (e) {}
   }
@@ -867,8 +877,11 @@ class LightUpApp {
           const isDailyExpired = (cat === 'daily' && saved.puzzleID !== today);
 
           if (!isDailyExpired && saved.task && saved.width && saved.height) {
-            this.restoreSavedPuzzle(saved);
-            return;
+            // If the saved puzzle was already completed, don't reopen the solved board—start a fresh puzzle!
+            if (!saved.isSolved) {
+              this.restoreSavedPuzzle(saved);
+              return;
+            }
           }
         }
       } catch (e) {
@@ -1057,7 +1070,7 @@ class LightUpApp {
             cell.appendChild(clueSpan);
 
             // Check clue status
-            const clueState = this.checkClueState(r, c, cellVal);
+            const clueState = this.checkClueState(r, c, cellVal, litMap);
             if (this.settings.markErrors && clueState === 'error') {
               cell.classList.add('wall-error');
             } else if (this.settings.grayCompleted && clueState === 'satisfied') {
@@ -1134,13 +1147,20 @@ class LightUpApp {
     return { litMap, clashes };
   }
 
-  checkClueState(r, c, clue) {
+  checkClueState(r, c, clue, litMap) {
     const adj = this.solver.getAdjWhite(r, c);
     let bulbCount = 0;
     let freeCount = 0;
     for (const p of adj) {
-      if (this.bulbs.has(p.key)) bulbCount++;
-      else if (!this.crosses.has(p.key)) freeCount++;
+      if (this.bulbs.has(p.key)) {
+        bulbCount++;
+      } else if (!this.crosses.has(p.key)) {
+        // If this adjacent square is illuminated by another bulb, a bulb cannot legally be placed here
+        const isLitByOther = litMap && litMap.has(p.key);
+        if (!isLitByOther) {
+          freeCount++;
+        }
+      }
     }
 
     if (bulbCount > clue || (bulbCount + freeCount < clue)) {
@@ -1527,6 +1547,9 @@ class LightUpApp {
       e.preventDefault();
     } else if (e.key.toLowerCase() === 'h') {
       this.giveHint();
+    } else if (e.key.toLowerCase() === 'n' && !e.ctrlKey && !e.metaKey) {
+      this.newRandomPuzzle(true);
+      e.preventDefault();
     } else if (e.key === 'Enter') {
       this.checkSolution(true);
     }
@@ -1631,28 +1654,39 @@ class LightUpApp {
     this.saveCurrentState();
   }
 
-  newRandomPuzzle() {
+  newRandomPuzzle(announce = true) {
     const [w, h] = this.currentCat === '7x7' ? [7, 7] : (this.currentCat === '10x10' ? [10, 10] : (this.currentCat === '14x14' ? [14, 14] : [25, 25]));
 
-    // For 7x7 and 10x10 boards, generate a fresh unique puzzle directly on-the-fly!
-    if (w <= 10) {
+    // Generate fresh unique procedural puzzle on-the-fly (unlimited combinations!)
+    if (w <= 14) {
       const gen = AkariGenerator.generate(w, h, this.currentDiff);
       if (gen) {
+        const freshID = Math.floor(Math.random() * 9000000 + 1000000);
         this.loadPuzzle({
           width: w,
           height: h,
           task: gen.task,
-          title: `${this.currentCat} ${this.currentDiff.toUpperCase()} (Fresh)`,
-          puzzleID: Math.floor(Math.random() * 9000000 + 1000000)
+          title: `${this.currentCat} ${this.currentDiff.toUpperCase()} (Fresh #${freshID.toString().slice(-4)})`,
+          puzzleID: freshID
         });
         this.markTaskPlayed(gen.task);
         this.saveCurrentState();
+        if (announce && this.hintMessageEl && this.hintToastEl) {
+          this.hintMessageEl.textContent = `✨ Generated fresh unique ${this.currentCat} ${this.currentDiff} puzzle!`;
+          this.hintToastEl.classList.add('show');
+          setTimeout(() => this.hintToastEl.classList.remove('show'), 2500);
+        }
         return;
       }
     }
 
-    // For larger boards or fallback, pick an unplayed authentic puzzle from library
+    // For 25x25 or fallback, load an unplayed authentic puzzle from the library
     this.loadCategoryPuzzle(this.currentCat, this.currentDiff, true);
+    if (announce && this.hintMessageEl && this.hintToastEl) {
+      this.hintMessageEl.textContent = `✨ Loaded new ${this.currentCat} ${this.currentDiff} puzzle!`;
+      this.hintToastEl.classList.add('show');
+      setTimeout(() => this.hintToastEl.classList.remove('show'), 2500);
+    }
   }
 
   getSizeKey() {

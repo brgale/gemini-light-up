@@ -23,19 +23,38 @@ class AkariGenerator {
   }
 
   static generate(width, height, difficulty = 'easy', seed = null) {
-    const rng = seed !== null ? this.seededRng(seed) : Math.random;
+    const rng = seed !== null && seed !== undefined ? this.seededRng(seed) : Math.random;
 
-    const wallRatio = width <= 7 ? 0.25 : (width <= 10 ? 0.25 : (width <= 14 ? 0.27 : 0.29));
+    const wallRatio = width <= 7 ? 0.22 : (width <= 10 ? 0.23 : (width <= 14 ? 0.25 : 0.28));
     const targetWalls = Math.floor(width * height * wallRatio);
+    const maxAttempts = width <= 10 ? 30 : (width <= 14 ? 18 : 10);
 
-    const maxAttempts = width <= 10 ? 35 : (width <= 14 ? 20 : 10);
+    const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       // 1. Generate symmetric walls
       const grid = Array.from({ length: height }, () => Array(width).fill(-1));
-      let placedWalls = 0;
-      let tries = 0;
 
-      while (placedWalls < targetWalls && tries < 600) {
+      // Distributed seed walls for larger boards to maintain authentic corridor density
+      if (width >= 10) {
+        const step = width <= 14 ? 4 : 5;
+        for (let r = 1; r < height - 1; r += step) {
+          for (let c = 1; c < width - 1; c += step) {
+            grid[r][c] = -2;
+            grid[height - 1 - r][width - 1 - c] = -2;
+          }
+        }
+      }
+
+      let currentWalls = 0;
+      for (let r = 0; r < height; r++) {
+        for (let c = 0; c < width; c++) {
+          if (grid[r][c] === -2) currentWalls++;
+        }
+      }
+
+      let tries = 0;
+      while (currentWalls < targetWalls && tries < 800) {
         tries++;
         const r = Math.floor(rng() * height);
         const c = Math.floor(rng() * width);
@@ -43,10 +62,9 @@ class AkariGenerator {
         const sc = width - 1 - c;
 
         if (grid[r][c] === -1 && grid[sr][sc] === -1) {
-          // Avoid 2x2 blocks of walls
           grid[r][c] = -2;
           grid[sr][sc] = -2;
-          placedWalls += (r === sr && c === sc) ? 1 : 2;
+          currentWalls += (r === sr && c === sc) ? 1 : 2;
         }
       }
 
@@ -54,7 +72,7 @@ class AkariGenerator {
       const whiteCells = [];
       for (let r = 0; r < height; r++) {
         for (let c = 0; c < width; c++) {
-          if (grid[r][c] === -1) whiteCells.push({ r, c });
+          if (grid[r][c] === -1) whiteCells.push(r * width + c);
         }
       }
 
@@ -64,58 +82,48 @@ class AkariGenerator {
         [whiteCells[i], whiteCells[j]] = [whiteCells[j], whiteCells[i]];
       }
 
-      const getLos = (r, c) => {
-        const los = new Set([`${r},${c}`]);
-        const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
-        for (const [dr, dc] of dirs) {
-          let nr = r + dr, nc = c + dc;
+      const losMap = {};
+      for (let i = 0; i < whiteCells.length; i++) {
+        const idx = whiteCells[i];
+        const wr = Math.floor(idx / width), wc = idx % width;
+        const los = [idx];
+        for (let d = 0; d < 4; d++) {
+          let nr = wr + dirs[d][0], nc = wc + dirs[d][1];
           while (nr >= 0 && nr < height && nc >= 0 && nc < width && grid[nr][nc] === -1) {
-            los.add(`${nr},${nc}`);
-            nr += dr;
-            nc += dc;
+            los.push(nr * width + nc);
+            nr += dirs[d][0];
+            nc += dirs[d][1];
           }
         }
-        return los;
-      };
-
-      const losMap = new Map();
-      for (const p of whiteCells) {
-        losMap.set(`${p.r},${p.c}`, getLos(p.r, p.c));
+        losMap[idx] = los;
       }
 
       const bulbs = new Set();
       const lit = new Set();
       const forbidden = new Set();
-
-      let unlit = whiteCells.map(p => `${p.r},${p.c}`);
+      let unlit = whiteCells.slice();
       let stuck = false;
 
       while (unlit.length > 0) {
-        const target = unlit.pop();
-        if (lit.has(target)) continue;
+        const targetCell = unlit.pop();
+        if (lit.has(targetCell)) continue;
 
-        const targetLos = losMap.get(target);
-        const candidates = [];
-        for (const k of targetLos) {
-          if (!forbidden.has(k)) candidates.push(k);
-        }
-
-        if (candidates.length === 0) {
+        const cand = losMap[targetCell].filter(k => !forbidden.has(k));
+        if (cand.length === 0) {
           stuck = true;
           break;
         }
 
-        // Pick candidate covering most unlit cells
-        candidates.sort((a, b) => {
+        cand.sort((a, b) => {
           let unlitA = 0, unlitB = 0;
-          for (const c of losMap.get(a)) if (!lit.has(c)) unlitA++;
-          for (const c of losMap.get(b)) if (!lit.has(c)) unlitB++;
+          for (const k of losMap[a]) if (!lit.has(k)) unlitA++;
+          for (const k of losMap[b]) if (!lit.has(k)) unlitB++;
           return unlitB - unlitA;
         });
 
-        const chosen = candidates[Math.floor(rng() * Math.min(2, candidates.length))];
+        const chosen = cand[Math.floor(rng() * Math.min(2, cand.length))];
         bulbs.add(chosen);
-        for (const k of losMap.get(chosen)) {
+        for (const k of losMap[chosen]) {
           lit.add(k);
           forbidden.add(k);
         }
@@ -125,30 +133,64 @@ class AkariGenerator {
 
       if (stuck || lit.size !== whiteCells.length) continue;
 
-      // 3. Assign clues to black cells
+      // 3. Assign initial clues to black cells
       const bulbCoords = new Set();
-      for (const b of bulbs) {
-        const [r, c] = b.split(',').map(Number);
-        bulbCoords.add(`${r},${c}`);
-      }
+      bulbs.forEach(b => bulbCoords.add(`${Math.floor(b / width)},${b % width}`));
 
       for (let r = 0; r < height; r++) {
         for (let c = 0; c < width; c++) {
           if (grid[r][c] === -2) {
-            let adjBulbs = 0;
-            const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-            for (const [dr, dc] of dirs) {
-              const nr = r + dr, nc = c + dc;
-              if (bulbCoords.has(`${nr},${nc}`)) adjBulbs++;
+            let adj = 0;
+            for (let d = 0; d < 4; d++) {
+              if (bulbCoords.has(`${r + dirs[d][0]},${c + dirs[d][1]}`)) adj++;
             }
-            grid[r][c] = adjBulbs;
+            grid[r][c] = adj;
           }
         }
       }
 
       // 4. Verify unique solution using solver
       const solver = new AkariSolver(width, height, grid);
-      const sols = solver.solve(2);
+      let sols = solver.solve(2);
+
+      // Fast targeted ambiguity resolution if exactly 2 symmetric solutions exist
+      if (sols.length === 2) {
+        const s0 = new Set(sols[0].map(b => `${b.r},${b.c}`));
+        const s1 = new Set(sols[1].map(b => `${b.r},${b.c}`));
+        const diff = [];
+        s0.forEach(k => { if (!s1.has(k)) diff.push(k); });
+
+        for (const k of diff) {
+          const [br, bc] = k.split(',').map(Number);
+          for (let d = 0; d < 4; d++) {
+            const wr = br + dirs[d][0], wc = bc + dirs[d][1];
+            const swr = height - 1 - wr, swc = width - 1 - wc;
+            if (wr >= 0 && wr < height && wc >= 0 && wc < width && grid[wr][wc] === -1 && grid[swr][swc] === -1) {
+              grid[wr][wc] = -2;
+              grid[swr][swc] = -2;
+
+              let c1 = 0, c2 = 0;
+              for (let dd = 0; dd < 4; dd++) {
+                if (s0.has(`${wr + dirs[dd][0]},${wc + dirs[dd][1]}`)) c1++;
+                if (s0.has(`${swr + dirs[dd][0]},${swc + dirs[dd][1]}`)) c2++;
+              }
+              grid[wr][wc] = c1;
+              grid[swr][swc] = c2;
+
+              const testSolver = new AkariSolver(width, height, grid);
+              const testSols = testSolver.solve(2);
+              if (testSols.length === 1) {
+                sols = testSols;
+                break;
+              }
+              grid[wr][wc] = -1;
+              grid[swr][swc] = -1;
+            }
+          }
+          if (sols.length === 1) break;
+        }
+      }
+
       if (sols.length !== 1) continue;
 
       // 5. Clue pruning to adjust difficulty
@@ -164,20 +206,21 @@ class AkariGenerator {
         [cluePositions[i], cluePositions[j]] = [cluePositions[j], cluePositions[i]];
       }
 
-      const pruneTarget = difficulty === 'hard' ? cluePositions.length : (difficulty === 'normal' ? Math.floor(cluePositions.length * 0.6) : Math.floor(cluePositions.length * 0.25));
+      const pruneRatio = difficulty === 'hard' ? 0.70 : (difficulty === 'normal' ? 0.45 : 0.20);
+      const pruneTarget = Math.floor(cluePositions.length * pruneRatio);
+      const maxTests = Math.min(20, cluePositions.length);
       let pruned = 0;
 
-      for (const { r, c } of cluePositions) {
-        if (pruned >= pruneTarget) break;
-        const oldVal = grid[r][c];
-        grid[r][c] = -2; // unnumbered
+      for (let i = 0; i < maxTests && pruned < pruneTarget; i++) {
+        const pos = cluePositions[i];
+        const oldVal = grid[pos.r][pos.c];
+        grid[pos.r][pos.c] = -2;
 
         const testSolver = new AkariSolver(width, height, grid);
-        const testSols = testSolver.solve(2);
-        if (testSols.length === 1) {
+        if (testSolver.solve(2).length === 1) {
           pruned++;
         } else {
-          grid[r][c] = oldVal; // restore
+          grid[pos.r][pos.c] = oldVal;
         }
       }
 
@@ -191,7 +234,6 @@ class AkariGenerator {
       };
     }
 
-    // Fallback: simple 7x7 known task if generation timed out
     return null;
   }
 }
