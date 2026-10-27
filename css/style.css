@@ -105,6 +105,11 @@ body {
   flex-direction: column;
   overflow-x: hidden;
   user-select: none;
+  cursor: default;
+}
+
+button, a, label, select, input[type="checkbox"], input[type="range"] {
+  cursor: default;
 }
 
 /* App Layout */
@@ -184,7 +189,7 @@ body {
   color: var(--text-main);
   text-decoration: none;
   font-size: 0.9rem;
-  cursor: pointer;
+  cursor: default;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -295,7 +300,7 @@ body {
   background: transparent;
   border: 1px solid transparent;
   color: var(--text-main);
-  cursor: pointer;
+  cursor: default;
   transition: all 0.15s ease;
 }
 
@@ -337,7 +342,7 @@ body {
 
 .zoom-slider-row input[type="range"] {
   width: 76px;
-  cursor: pointer;
+  cursor: default;
   accent-color: var(--primary);
 }
 
@@ -370,7 +375,7 @@ body {
   background: none;
   border: none;
   color: var(--text-muted);
-  cursor: pointer;
+  cursor: default;
   display: flex;
   align-items: center;
   padding: 2px;
@@ -401,7 +406,7 @@ body {
   background: transparent;
   color: var(--text-muted);
   border-radius: 4px;
-  cursor: pointer;
+  cursor: default;
   gap: 5px;
   transition: all 0.15s ease;
 }
@@ -441,7 +446,7 @@ body {
   border: 1px solid var(--border-color);
   padding: 3px 8px;
   border-radius: 12px;
-  cursor: pointer;
+  cursor: default;
   font-size: 0.78rem;
   color: var(--text-main);
   display: flex;
@@ -498,15 +503,15 @@ body {
   touch-action: none;
 }
 
-/* Pan Tool Cursor Styles */
+/* Pan Tool Cursor Styles - Keep regular arrow */
 body[data-tool="pan"] .board-container,
 body[data-tool="pan"] .cell {
-  cursor: grab !important;
+  cursor: default !important;
 }
 
 body.is-panning .board-container,
 body.is-panning .cell {
-  cursor: grabbing !important;
+  cursor: default !important;
 }
 
 /* Cell Styles */
@@ -516,7 +521,7 @@ body.is-panning .cell {
   align-items: center;
   justify-content: center;
   background: var(--cell-bg);
-  cursor: pointer;
+  cursor: default;
   transition: background-color 0.12s ease;
   font-weight: 700;
   width: var(--cell-size);
@@ -707,7 +712,7 @@ body.is-panning .cell {
   border: 1px solid var(--border-color);
   background: var(--bg-surface);
   color: var(--text-main);
-  cursor: pointer;
+  cursor: default;
   transition: all 0.15s ease;
 }
 
@@ -790,7 +795,7 @@ body.is-panning .cell {
   background: none;
   border: none;
   color: var(--text-muted);
-  cursor: pointer;
+  cursor: default;
   padding: 4px;
 }
 
@@ -894,7 +899,7 @@ body.is-panning .cell {
 
 .slider {
   position: absolute;
-  cursor: pointer;
+  cursor: default;
   inset: 0;
   background-color: var(--border-strong);
   transition: 0.2s;
