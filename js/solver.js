@@ -228,102 +228,292 @@ class AkariSolver {
     return st;
   }
 
-  solve(maxSolutions = 1) {
-    const initialState = new Map();
-    for (let r = 0; r < this.h; r++) {
-      for (let c = 0; c < this.w; c++) {
-        if (this.board[r][c] === -1) {
-          initialState.set(`${r},${c}`, undefined);
+  _initFastStructures() {
+    if (this._fastInit) return;
+    this._fastInit = true;
+    const w = this.w, h = this.h, N = w * h;
+    this.flatBoard = new Int8Array(N);
+    this.cellSegH = new Int16Array(N);
+    this.cellSegV = new Int16Array(N);
+    for (let r = 0; r < h; r++) {
+      for (let c = 0; c < w; c++) {
+        const idx = r * w + c;
+        this.flatBoard[idx] = this.board[r][c];
+        this.cellSegH[idx] = this.segH[r][c];
+        this.cellSegV[idx] = this.segV[r][c];
+      }
+    }
+    this.fastHCells = this.hCells.map(seg => Int16Array.from(seg.map(p => p.r * w + p.c)));
+    this.fastVCells = this.vCells.map(seg => Int16Array.from(seg.map(p => p.r * w + p.c)));
+    this.clues = [];
+    this.whiteIndices = [];
+    const diags = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+    for (let r = 0; r < h; r++) {
+      for (let c = 0; c < w; c++) {
+        const idx = r * w + c;
+        const v = this.board[r][c];
+        if (v >= 0) {
+          const adj = this.getAdjWhite(r, c).map(p => p.r * w + p.c);
+          const corners = [];
+          for (const [dr, dc] of diags) {
+            const nr = r + dr, nc = c + dc;
+            if (nr >= 0 && nr < h && nc >= 0 && nc < w && this.board[nr][nc] === -1) {
+              if (this.board[r + dr][c] === -1 && this.board[r][c + dc] === -1) {
+                corners.push({
+                  diagIdx: nr * w + nc,
+                  orth1: (r + dr) * w + c,
+                  orth2: r * w + (c + dc)
+                });
+              }
+            }
+          }
+          this.clues.push({ r, c, idx, clue: v, adj: Int16Array.from(adj), corners, active: true });
+        } else if (v === -1) {
+          this.whiteIndices.push(idx);
+        }
+      }
+    }
+    this.whiteIndices = Int16Array.from(this.whiteIndices);
+  }
+
+  fastPropagate(st) {
+    const hCells = this.fastHCells;
+    const vCells = this.fastVCells;
+    const cellSegH = this.cellSegH;
+    const cellSegV = this.cellSegV;
+    const clues = this.clues;
+    const whites = this.whiteIndices;
+    let changed = true;
+
+    const setBulb = (idx) => {
+      const cur = st[idx];
+      if (cur === 0) return false;
+      if (cur === 1) return true;
+      st[idx] = 1;
+      changed = true;
+      const hSeg = hCells[cellSegH[idx]];
+      for (let i = 0; i < hSeg.length; i++) {
+        const p = hSeg[i];
+        if (p === idx) continue;
+        if (st[p] === 1) return false;
+        if (st[p] === -1) st[p] = 0;
+      }
+      const vSeg = vCells[cellSegV[idx]];
+      for (let i = 0; i < vSeg.length; i++) {
+        const p = vSeg[i];
+        if (p === idx) continue;
+        if (st[p] === 1) return false;
+        if (st[p] === -1) st[p] = 0;
+      }
+      return true;
+    };
+
+    for (let i = 0; i < whites.length; i++) {
+      const idx = whites[i];
+      if (st[idx] === 1) {
+        st[idx] = -1;
+        if (!setBulb(idx)) return null;
+      }
+    }
+
+    while (changed) {
+      changed = false;
+
+      // 1. Clues & diagonal corner elimination
+      for (let i = 0; i < clues.length; i++) {
+        const cObj = clues[i];
+        if (!cObj.active) continue;
+        const clue = cObj.clue;
+        const adj = cObj.adj;
+        let bulbs = 0;
+        let freeCount = 0;
+        for (let j = 0; j < adj.length; j++) {
+          const v = st[adj[j]];
+          if (v === 1) bulbs++;
+          else if (v === -1) freeCount++;
+        }
+        if (bulbs > clue || bulbs + freeCount < clue) return null;
+        if (freeCount > 0) {
+          const rem = clue - bulbs;
+          if (rem === 0) {
+            for (let j = 0; j < adj.length; j++) {
+              if (st[adj[j]] === -1) st[adj[j]] = 0;
+            }
+            changed = true;
+          } else if (freeCount === rem) {
+            for (let j = 0; j < adj.length; j++) {
+              if (st[adj[j]] === -1) {
+                if (!setBulb(adj[j])) return null;
+              }
+            }
+          } else if (rem >= 1 && freeCount === rem + 1 && cObj.corners.length > 0) {
+            for (let k = 0; k < cObj.corners.length; k++) {
+              const cn = cObj.corners[k];
+              if (st[cn.diagIdx] === -1 && st[cn.orth1] === -1 && st[cn.orth2] === -1) {
+                st[cn.diagIdx] = 0;
+                changed = true;
+              }
+            }
+          }
+        }
+      }
+
+      // 2. Full single-illuminator coverage deduction
+      for (let i = 0; i < whites.length; i++) {
+        const idx = whites[i];
+        const hSeg = hCells[cellSegH[idx]];
+        let isLit = false;
+        for (let j = 0; j < hSeg.length; j++) {
+          if (st[hSeg[j]] === 1) { isLit = true; break; }
+        }
+        if (isLit) continue;
+        const vSeg = vCells[cellSegV[idx]];
+        for (let j = 0; j < vSeg.length; j++) {
+          if (st[vSeg[j]] === 1) { isLit = true; break; }
+        }
+        if (isLit) continue;
+
+        let candCount = 0;
+        let lastCand = -1;
+        for (let j = 0; j < hSeg.length; j++) {
+          const p = hSeg[j];
+          if (st[p] === -1) {
+            candCount++;
+            lastCand = p;
+            if (candCount > 1) break;
+          }
+        }
+        if (candCount <= 1) {
+          for (let j = 0; j < vSeg.length; j++) {
+            const p = vSeg[j];
+            if (p === idx) continue;
+            if (st[p] === -1) {
+              candCount++;
+              lastCand = p;
+              if (candCount > 1) break;
+            }
+          }
+        }
+        if (candCount === 0) return null;
+        if (candCount === 1) {
+          if (!setBulb(lastCand)) return null;
         }
       }
     }
 
+    return st;
+  }
+
+  solve(maxSolutions = 1, maxNodes = 0) {
+    this._initFastStructures();
+    const N = this.w * this.h;
+    const initial = new Int8Array(N);
+    initial.fill(-2);
+    const whites = this.whiteIndices;
+    for (let i = 0; i < whites.length; i++) initial[whites[i]] = -1;
+
     const solutions = [];
+    let nodes = 0;
+    let aborted = false;
 
-    const backtrack = (currState) => {
-      if (solutions.length >= maxSolutions) return;
-
-      const prop = this.propagate(currState);
-      if (!prop) return;
-
-      // Find unlit cells
-      const unlit = [];
-      for (let r = 0; r < this.h; r++) {
-        for (let c = 0; c < this.w; c++) {
-          if (this.board[r][c] !== -1) continue;
-          const hid = this.segH[r][c];
-          const vid = this.segV[r][c];
-          const hLit = this.hCells[hid].some(p => prop.get(`${p.r},${p.c}`) === 1);
-          const vLit = this.vCells[vid].some(p => prop.get(`${p.r},${p.c}`) === 1);
-          if (!hLit && !vLit) {
-            unlit.push({ r, c, key: `${r},${c}` });
-          }
-        }
-      }
-
-      if (unlit.length === 0) {
-        // Verify all clues
-        let valid = true;
-        for (let r = 0; r < this.h; r++) {
-          for (let c = 0; c < this.w; c++) {
-            const clue = this.board[r][c];
-            if (clue >= 0) {
-              const adj = this.getAdjWhite(r, c);
-              const bCount = adj.filter(p => prop.get(p.key) === 1).length;
-              if (bCount !== clue) {
-                valid = false;
-                break;
-              }
-            }
-          }
-          if (!valid) break;
-        }
-
-        if (valid) {
-          const bulbs = [];
-          for (const [k, v] of prop.entries()) {
-            if (v === 1) {
-              const [r, c] = k.split(',').map(Number);
-              bulbs.push({ r, c });
-            }
-          }
-          solutions.push(bulbs);
-        }
+    const backtrack = (curr) => {
+      if (solutions.length >= maxSolutions || aborted) return;
+      nodes++;
+      if (maxNodes > 0 && nodes > maxNodes) {
+        aborted = true;
         return;
       }
 
-      // Pick an unassigned cell to branch on
-      let choice = null;
-      for (const p of unlit) {
-        if (prop.get(p.key) === undefined) {
-          choice = p.key;
-          break;
+      const prop = this.fastPropagate(new Int8Array(curr));
+      if (!prop) return;
+
+      let bestChoice = -1;
+      let bestScore = 999999;
+
+      const clues = this.clues;
+      for (let i = 0; i < clues.length; i++) {
+        if (!clues[i].active) continue;
+        const adj = clues[i].adj;
+        let bulbs = 0, free = 0, firstFree = -1;
+        for (let j = 0; j < adj.length; j++) {
+          const v = prop[adj[j]];
+          if (v === 1) bulbs++;
+          else if (v === -1) { free++; if (firstFree === -1) firstFree = adj[j]; }
         }
-      }
-      if (!choice) {
-        for (const [k, v] of prop.entries()) {
-          if (v === undefined) {
-            choice = k;
-            break;
+        if (free > 0 && bulbs < clues[i].clue) {
+          if (free < bestScore) {
+            bestScore = free;
+            bestChoice = firstFree;
+            if (bestScore <= 2) break;
           }
         }
       }
 
-      if (!choice) return;
+      let unlitCount = 0;
+      for (let i = 0; i < whites.length; i++) {
+        const idx = whites[i];
+        const hSeg = this.fastHCells[this.cellSegH[idx]];
+        let lit = false;
+        for (let j = 0; j < hSeg.length; j++) if (prop[hSeg[j]] === 1) { lit = true; break; }
+        if (!lit) {
+          const vSeg = this.fastVCells[this.cellSegV[idx]];
+          for (let j = 0; j < vSeg.length; j++) if (prop[vSeg[j]] === 1) { lit = true; break; }
+        }
+        if (!lit) {
+          unlitCount++;
+          if (bestChoice === -1) {
+            for (let j = 0; j < hSeg.length; j++) {
+              if (prop[hSeg[j]] === -1) { bestChoice = hSeg[j]; break; }
+            }
+            if (bestChoice === -1) {
+              const vSeg = this.fastVCells[this.cellSegV[idx]];
+              for (let j = 0; j < vSeg.length; j++) {
+                if (prop[vSeg[j]] === -1) { bestChoice = vSeg[j]; break; }
+              }
+            }
+          }
+        }
+      }
 
-      // Try bulb (1)
-      const st1 = new Map(prop);
-      st1.set(choice, 1);
-      backtrack(st1);
-      if (solutions.length >= maxSolutions) return;
+      if (unlitCount === 0) {
+        for (let i = 0; i < clues.length; i++) {
+          if (!clues[i].active) continue;
+          const adj = clues[i].adj;
+          let bulbs = 0;
+          for (let j = 0; j < adj.length; j++) if (prop[adj[j]] === 1) bulbs++;
+          if (bulbs !== clues[i].clue) return;
+        }
+        const resBulbs = [];
+        for (let i = 0; i < whites.length; i++) {
+          const idx = whites[i];
+          if (prop[idx] === 1) {
+            resBulbs.push({ r: Math.floor(idx / this.w), c: idx % this.w });
+          }
+        }
+        solutions.push(resBulbs);
+        return;
+      }
 
-      // Try cross (0)
-      const st0 = new Map(prop);
-      st0.set(choice, 0);
-      backtrack(st0);
+      if (bestChoice === -1) return;
+
+      const s1 = new Int8Array(prop);
+      s1[bestChoice] = 1;
+      backtrack(s1);
+      if (solutions.length >= maxSolutions || aborted) return;
+
+      const s0 = new Int8Array(prop);
+      s0[bestChoice] = 0;
+      backtrack(st0From(prop, bestChoice));
     };
 
-    backtrack(initialState);
+    const st0From = (prop, idx) => {
+      const s0 = new Int8Array(prop);
+      s0[idx] = 0;
+      return s0;
+    };
+
+    backtrack(initial);
+    if (aborted) return [];
     return solutions;
   }
 

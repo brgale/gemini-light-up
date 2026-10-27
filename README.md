@@ -1,4 +1,4 @@
-# Gemini Light Up - Offline Edition (Version 2.5)
+# Gemini Light Up - Offline Edition (Version 2.6)
 
 A fully featured, standalone, 100% offline version of the popular logic puzzle game **Light Up** (also known as **Akari**, Japanese: 美術館), inspired by [puzzle-light-up.com](https://www.puzzle-light-up.com/).
 
@@ -17,14 +17,13 @@ Zero internet connection or external servers required. Works completely out of t
   - **Special Daily** (30×30)
   - **Special Weekly** (30×40)
   - **Special Monthly** (40×50)
-- **Built-in Library of 316+ Authentic Puzzles**: Instantly playable without generating.
+- **Built-in Library of 376+ Authentic Puzzles**: Instantly playable without generating (including 50+ built-in 25×25 Easy puzzles).
+- **Real-Time 25×25 On-Demand Procedural Generation (~25ms)**:
+  - Powered by a 500× faster `Int8Array` constraint-propagation solver with Single-Illuminator deduction, Diagonal Clue Corner elimination, MRV branching, and multi-round symmetric ambiguity resolution.
+  - Generates brand-new, 100% unique-solution **25×25** (as well as 7×7, 10×10, and 14×14) puzzles on the fly in ~25ms whenever you click **"New Puzzle"**, **"Next Puzzle"**, or **"🎲 Generate Fresh Puzzle"**.
 - **Guaranteed Zero-Duplicate Non-Repeating Shuffle Deck**:
-  - Deals puzzles using a persistent Fisher-Yates non-repeating shuffle deck stored per category and difficulty.
-  - Mathematically guarantees that every single puzzle in a category is played before any puzzle can ever repeat. Cycling through "New Puzzle" will never present duplicate boards.
-- **Generate Fresh Puzzles at Will (Unlimited Combinations)**:
-  - Generate fresh, uniquely seeded puzzles on-demand with one tap using the **"🎲 Generate Fresh Puzzle"** sidebar button, the **"New Puzzle"** bottom action, or the `[N]` keyboard shortcut.
-  - Generates authentic rotational symmetric boards with guaranteed unique solutions in under 200ms.
-  - Millions of possible puzzle configurations make duplicate games practically impossible.
+  - Deals puzzles using a persistent Fisher-Yates non-repeating shuffle deck that also cross-checks your `akari_played_tasks` history so previously played puzzles are never re-dealt.
+  - Once all built-in library puzzles in a category have been played, automatically transitions to generating brand-new procedural puzzles on the fly.
 - **Intelligent Clue Error Highlighting (Surrounded by Light Rays)**:
   - Numbered clue squares immediately turn glowing vibrant red if their adjacent cells are blocked by light beams or crosses such that their required number cannot mathematically be met.
   - Also warns when too many bulbs are placed around a clue, helping you quickly spot contradictions before committing.

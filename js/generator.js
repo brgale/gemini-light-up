@@ -25,36 +25,38 @@ class AkariGenerator {
   static generate(width, height, difficulty = 'easy', seed = null) {
     const rng = seed !== null && seed !== undefined ? this.seededRng(seed) : Math.random;
 
-    const wallRatio = width <= 7 ? 0.22 : (width <= 10 ? 0.23 : (width <= 14 ? 0.25 : 0.28));
+    const wallRatio = width <= 7 ? 0.22 : (width <= 10 ? 0.24 : (width <= 14 ? 0.26 : 0.30));
     const targetWalls = Math.floor(width * height * wallRatio);
-    const maxAttempts = width <= 10 ? 30 : (width <= 14 ? 18 : 10);
+    const maxAttempts = 50;
 
     const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      // 1. Generate symmetric walls
+      // 1. Generate symmetric walls with randomized corridor breaking (unique geometry every time)
       const grid = Array.from({ length: height }, () => Array(width).fill(-1));
+      let currentWalls = 0;
 
-      // Distributed seed walls for larger boards to maintain authentic corridor density
       if (width >= 10) {
-        const step = width <= 14 ? 4 : 5;
-        for (let r = 1; r < height - 1; r += step) {
-          for (let c = 1; c < width - 1; c += step) {
-            grid[r][c] = -2;
-            grid[height - 1 - r][width - 1 - c] = -2;
+        const maxRun = width >= 20 ? 6 : 5;
+        for (let r = 0; r < Math.ceil(height / 2); r++) {
+          let run = 0;
+          for (let c = 0; c < width; c++) {
+            if (grid[r][c] === -1) run++;
+            else run = 0;
+            if (run >= maxRun && rng() < 0.45) {
+              const sr = height - 1 - r;
+              const sc = width - 1 - c;
+              grid[r][c] = -2;
+              grid[sr][sc] = -2;
+              currentWalls += (r === sr && c === sc) ? 1 : 2;
+              run = 0;
+            }
           }
         }
       }
 
-      let currentWalls = 0;
-      for (let r = 0; r < height; r++) {
-        for (let c = 0; c < width; c++) {
-          if (grid[r][c] === -2) currentWalls++;
-        }
-      }
-
       let tries = 0;
-      while (currentWalls < targetWalls && tries < 800) {
+      while (currentWalls < targetWalls && tries < 1000) {
         tries++;
         const r = Math.floor(rng() * height);
         const c = Math.floor(rng() * width);
@@ -149,78 +151,81 @@ class AkariGenerator {
         }
       }
 
-      // 4. Verify unique solution using solver
-      const solver = new AkariSolver(width, height, grid);
-      let sols = solver.solve(2);
+      // 4. Verify unique solution using fast Int8Array solver & multi-round ambiguity resolution
+      let solver = new AkariSolver(width, height, grid);
+      let sols = solver.solve(2, 60);
 
-      // Fast targeted ambiguity resolution if exactly 2 symmetric solutions exist
-      if (sols.length === 2) {
+      for (let round = 0; round < 6 && sols.length === 2; round++) {
         const s0 = new Set(sols[0].map(b => `${b.r},${b.c}`));
         const s1 = new Set(sols[1].map(b => `${b.r},${b.c}`));
-        const diff = [];
-        s0.forEach(k => { if (!s1.has(k)) diff.push(k); });
+        let fixedOne = false;
 
-        for (const k of diff) {
-          const [br, bc] = k.split(',').map(Number);
-          for (let d = 0; d < 4; d++) {
-            const wr = br + dirs[d][0], wc = bc + dirs[d][1];
-            const swr = height - 1 - wr, swc = width - 1 - wc;
-            if (wr >= 0 && wr < height && wc >= 0 && wc < width && grid[wr][wc] === -1 && grid[swr][swc] === -1) {
-              grid[wr][wc] = -2;
-              grid[swr][swc] = -2;
+        for (const k of s0) {
+          if (!s1.has(k)) {
+            const [br, bc] = k.split(',').map(Number);
+            for (let d = 0; d < 4; d++) {
+              const wr = br + dirs[d][0], wc = bc + dirs[d][1];
+              const swr = height - 1 - wr, swc = width - 1 - wc;
+              if (wr >= 0 && wr < height && wc >= 0 && wc < width &&
+                  grid[wr][wc] === -1 && grid[swr][swc] === -1 &&
+                  !bulbCoords.has(`${wr},${wc}`) && !bulbCoords.has(`${swr},${swc}`)) {
+                let c1 = 0, c2 = 0;
+                for (let dd = 0; dd < 4; dd++) {
+                  if (bulbCoords.has(`${wr + dirs[dd][0]},${wc + dirs[dd][1]}`)) c1++;
+                  if (bulbCoords.has(`${swr + dirs[dd][0]},${swc + dirs[dd][1]}`)) c2++;
+                }
+                grid[wr][wc] = c1;
+                grid[swr][swc] = c2;
 
-              let c1 = 0, c2 = 0;
-              for (let dd = 0; dd < 4; dd++) {
-                if (s0.has(`${wr + dirs[dd][0]},${wc + dirs[dd][1]}`)) c1++;
-                if (s0.has(`${swr + dirs[dd][0]},${swc + dirs[dd][1]}`)) c2++;
-              }
-              grid[wr][wc] = c1;
-              grid[swr][swc] = c2;
-
-              const testSolver = new AkariSolver(width, height, grid);
-              const testSols = testSolver.solve(2);
-              if (testSols.length === 1) {
-                sols = testSols;
+                solver = new AkariSolver(width, height, grid);
+                sols = solver.solve(2, 60);
+                fixedOne = true;
                 break;
               }
-              grid[wr][wc] = -1;
-              grid[swr][swc] = -1;
             }
+            if (fixedOne) break;
           }
-          if (sols.length === 1) break;
         }
+        if (!fixedOne) break;
       }
 
       if (sols.length !== 1) continue;
 
-      // 5. Clue pruning to adjust difficulty
-      const cluePositions = [];
+      // 5. Fast clue pruning to adjust difficulty while preserving unique solution
       for (let r = 0; r < height; r++) {
         for (let c = 0; c < width; c++) {
-          if (grid[r][c] >= 0) cluePositions.push({ r, c });
+          if (grid[r][c] >= 0) {
+            let adjW = 0;
+            for (let d = 0; d < 4; d++) {
+              const nr = r + dirs[d][0], nc = c + dirs[d][1];
+              if (nr >= 0 && nr < height && nc >= 0 && nc < width && grid[nr][nc] === -1) adjW++;
+            }
+            if (adjW === 0) grid[r][c] = -2;
+          }
         }
       }
 
-      for (let i = cluePositions.length - 1; i > 0; i--) {
+      solver = new AkariSolver(width, height, grid);
+      solver._initFastStructures();
+      const clueIndices = solver.clues.map((_, i) => i);
+      for (let i = clueIndices.length - 1; i > 0; i--) {
         const j = Math.floor(rng() * (i + 1));
-        [cluePositions[i], cluePositions[j]] = [cluePositions[j], cluePositions[i]];
+        [clueIndices[i], clueIndices[j]] = [clueIndices[j], clueIndices[i]];
       }
 
-      const pruneRatio = difficulty === 'hard' ? 0.70 : (difficulty === 'normal' ? 0.45 : 0.20);
-      const pruneTarget = Math.floor(cluePositions.length * pruneRatio);
-      const maxTests = Math.min(20, cluePositions.length);
+      const pruneRatio = difficulty === 'hard' ? 0.70 : (difficulty === 'normal' ? 0.52 : 0.35);
+      const pruneTarget = Math.floor(clueIndices.length * pruneRatio);
+      const maxPruneNodes = difficulty === 'easy' ? 1 : (difficulty === 'normal' ? 10 : 40);
       let pruned = 0;
 
-      for (let i = 0; i < maxTests && pruned < pruneTarget; i++) {
-        const pos = cluePositions[i];
-        const oldVal = grid[pos.r][pos.c];
-        grid[pos.r][pos.c] = -2;
-
-        const testSolver = new AkariSolver(width, height, grid);
-        if (testSolver.solve(2).length === 1) {
+      for (let i = 0; i < clueIndices.length && pruned < pruneTarget; i++) {
+        const cObj = solver.clues[clueIndices[i]];
+        cObj.active = false;
+        if (solver.solve(2, maxPruneNodes).length === 1) {
+          grid[cObj.r][cObj.c] = -2;
           pruned++;
         } else {
-          grid[pos.r][pos.c] = oldVal;
+          cObj.active = true;
         }
       }
 
