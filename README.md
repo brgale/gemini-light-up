@@ -1,4 +1,4 @@
-# Gemini Light Up - Offline Edition (Version 2.6)
+# Gemini Light Up - Offline Edition (Version 2.7)
 
 A fully featured, standalone, 100% offline version of the popular logic puzzle game **Light Up** (also known as **Akari**, Japanese: 美術館), inspired by [puzzle-light-up.com](https://www.puzzle-light-up.com/).
 
@@ -17,10 +17,12 @@ Zero internet connection or external servers required. Works completely out of t
   - **Special Daily** (30×30)
   - **Special Weekly** (30×40)
   - **Special Monthly** (40×50)
-- **Built-in Library of 376+ Authentic Puzzles**: Instantly playable without generating (including 50+ built-in 25×25 Easy puzzles).
-- **Real-Time 25×25 On-Demand Procedural Generation (~25ms)**:
-  - Powered by a 500× faster `Int8Array` constraint-propagation solver with Single-Illuminator deduction, Diagonal Clue Corner elimination, MRV branching, and multi-round symmetric ambiguity resolution.
-  - Generates brand-new, 100% unique-solution **25×25** (as well as 7×7, 10×10, and 14×14) puzzles on the fly in ~25ms whenever you click **"New Puzzle"**, **"Next Puzzle"**, or **"🎲 Generate Fresh Puzzle"**.
+- **Online-First Real-Time Generation & 616+ Puzzle Offline Cache**:
+  - Checks `navigator.onLine`: whenever you are online, **every new puzzle (including the 30×30 Daily Challenge, 30×40 Weekly, 40×50 Monthly, and all 7×7–25×25 categories) is freshly generated on the fly** so you never see a repeat.
+  - When offline, seamlessly pivots to the expanded **616-puzzle offline cache** (including 40 cached 30×30 Daily puzzles, 20 cached 30×40 Weekly puzzles, 15 cached 40×50 Monthly puzzles, and 100 cached 25×25 Easy puzzles) dealt via a non-repeating shuffle deck.
+- **Real-Time 25×25 & 30×30 Procedural Generation (~25ms)**:
+  - Powered by a 500× faster `Int8Array` constraint-propagation solver with Single-Illuminator deduction, Diagonal Clue Corner elimination, MRV branching, and multi-point symmetric ambiguity resolution.
+  - Generates brand-new, 100% unique-solution **25×25**, **30×30 Daily**, **30×40 Weekly**, and **40×50 Monthly** puzzles on the fly in milliseconds.
 - **Guaranteed Zero-Duplicate Non-Repeating Shuffle Deck**:
   - Deals puzzles using a persistent Fisher-Yates non-repeating shuffle deck that also cross-checks your `akari_played_tasks` history so previously played puzzles are never re-dealt.
   - Once all built-in library puzzles in a category have been played, automatically transitions to generating brand-new procedural puzzles on the fly.

@@ -912,6 +912,58 @@ class LightUpApp {
     return matches[chosenIdx];
   }
 
+  isOnline() {
+    if (typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean') {
+      return navigator.onLine;
+    }
+    return true;
+  }
+
+  getLocalDateString() {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  getDimensionsForCategory(cat, diff) {
+    if (cat === 'daily' || (cat === 'special' && diff === 'daily')) return [30, 30];
+    if (cat === 'special' && diff === 'weekly') return [30, 40];
+    if (cat === 'special' && diff === 'monthly') return [40, 50];
+    if (cat === '7x7') return [7, 7];
+    if (cat === '10x10') return [10, 10];
+    if (cat === '14x14') return [14, 14];
+    return [25, 25];
+  }
+
+  generateFreshForCategory(cat, diff, seed = null) {
+    const [w, h] = this.getDimensionsForCategory(cat, diff);
+    const solverDiff = (cat === 'daily' || cat === 'special') ? 'normal' : (diff || 'easy');
+    const played = this.getPlayedTasks();
+
+    // First try with optional seed (e.g. for initial Daily Challenge of the day)
+    if (seed !== null && seed !== undefined) {
+      const seeded = AkariGenerator.generate(w, h, solverDiff, seed);
+      if (seeded && !played.has(seeded.task) && seeded.task !== this.task) {
+        return seeded;
+      }
+    }
+
+    // Generate brand-new unseeded puzzle, ensuring it has never been played before
+    let fallbackCandidate = null;
+    for (let tries = 0; tries < 6; tries++) {
+      const candidate = AkariGenerator.generate(w, h, solverDiff);
+      if (candidate) {
+        if (!played.has(candidate.task) && candidate.task !== this.task) {
+          return candidate;
+        }
+        if (!fallbackCandidate) fallbackCandidate = candidate;
+      }
+    }
+    return fallbackCandidate;
+  }
+
   loadCategoryPuzzle(cat, diff, forceNew = false) {
     // Save current active category before switching
     if (this.task && this.board && this.board.length > 0) {
@@ -932,6 +984,8 @@ class LightUpApp {
       }
     });
 
+    const today = this.getLocalDateString();
+
     // Check for saved state unless forceNew
     if (!forceNew) {
       try {
@@ -939,10 +993,11 @@ class LightUpApp {
         const raw = localStorage.getItem(key);
         if (raw) {
           const saved = JSON.parse(raw);
-          const today = new Date().toISOString().slice(0, 10);
           const isDailyExpired = (cat === 'daily' && saved.puzzleID !== today);
+          // Invalidate legacy static daily puzzle that previously repeated across days
+          const isLegacyStaticDaily = (cat === 'daily' && saved.task && saved.task.startsWith('BcBB2a1B1bBbB1b1a2dBB1Bb2BbBbBBBbBkBb1Bf'));
 
-          if (!isDailyExpired && saved.task && saved.width && saved.height) {
+          if (!isDailyExpired && !isLegacyStaticDaily && saved.task && saved.width && saved.height) {
             // If the saved puzzle was already completed, don't reopen the solved board—start a fresh puzzle!
             if (!saved.isSolved) {
               this.restoreSavedPuzzle(saved);
@@ -955,67 +1010,85 @@ class LightUpApp {
       }
     }
 
-    // Daily Challenge (Authentic 30x30 grid)
-    if (cat === 'daily') {
-      const today = new Date().toISOString().slice(0, 10);
-      const lib = window.OFFLINE_PUZZLE_LIBRARY || [];
-      const dailyMatches = lib.filter(p => p.category === 'special' && p.difficulty === 'daily');
-      if (dailyMatches.length > 0) {
-        const seed = AkariGenerator.getSeedForDate(today);
-        const p = dailyMatches[seed % dailyMatches.length];
+    const online = this.isOnline();
+
+    // 1. When ONLINE: Always generate a brand-new puzzle on the fly every time!
+    if (online) {
+      const seed = (cat === 'daily' && !forceNew) ? AkariGenerator.getSeedForDate(today) : null;
+      const gen = this.generateFreshForCategory(cat, diff, seed);
+      if (gen) {
+        const freshID = (cat === 'daily' && !forceNew) ? today : Math.floor(Math.random() * 9000000 + 1000000);
+        let title;
+        if (cat === 'daily') {
+          title = forceNew
+            ? `Daily Challenge (${today}) [30x30 Fresh #${String(freshID).slice(-4)}]`
+            : `Daily Challenge (${today}) [30x30]`;
+        } else if (cat === 'special') {
+          title = `${diff.toUpperCase()} Challenge [${gen.width}x${gen.height} Fresh #${String(freshID).slice(-4)}]`;
+        } else {
+          title = `${cat} ${diff.toUpperCase()} (Fresh #${String(freshID).slice(-4)})`;
+        }
         this.loadPuzzle({
-          width: p.width,
-          height: p.height,
-          task: p.task,
-          title: `Daily Challenge (${today}) [30x30]`,
-          puzzleID: today
+          width: gen.width,
+          height: gen.height,
+          task: gen.task,
+          title,
+          puzzleID: freshID
         });
+        this.markTaskPlayed(gen.task);
         this.saveCurrentState();
         return;
       }
     }
 
-    // Deal an unplayed puzzle from the Non-Repeating Shuffle Deck
-    const p = this.getNextLibraryPuzzle(cat, diff, false);
-    if (p) {
+    // 2. When OFFLINE (or if generation fell back): Pivot to the 616-puzzle cached library!
+    const libCat = cat === 'daily' ? 'special' : cat;
+    const libDiff = cat === 'daily' ? 'daily' : diff;
+    const cachedPuz = this.getNextLibraryPuzzle(libCat, libDiff, false);
+    if (cachedPuz) {
+      const title = cat === 'daily'
+        ? `Daily Challenge (${today}) [30x30]`
+        : (cachedPuz.title || `${cat.toUpperCase()} ${diff.toUpperCase()}`);
+      const puzzleID = (cat === 'daily' && !forceNew)
+        ? today
+        : (cachedPuz.puzzleID || Math.floor(Math.random() * 9000000 + 1000000));
       this.loadPuzzle({
-        width: p.width,
-        height: p.height,
-        task: p.task,
-        title: p.title || `${cat.toUpperCase()} ${diff.toUpperCase()}`,
-        puzzleID: p.puzzleID || Math.floor(Math.random() * 9000000 + 1000000)
+        width: cachedPuz.width,
+        height: cachedPuz.height,
+        task: cachedPuz.task,
+        title,
+        puzzleID
       });
-      this.markTaskPlayed(p.task);
+      this.markTaskPlayed(cachedPuz.task);
       this.saveCurrentState();
       return;
     }
 
-    // Generate a brand-new unique procedural puzzle on the fly (including 25x25!)
-    const [w, h] = cat === '7x7' ? [7, 7] : (cat === '10x10' ? [10, 10] : (cat === '14x14' ? [14, 14] : [25, 25]));
-    const gen = AkariGenerator.generate(w, h, diff);
-    if (gen) {
+    // 3. If offline cache for this category is completely exhausted, generate fresh locally anyway!
+    const genFallback = this.generateFreshForCategory(cat, diff, null);
+    if (genFallback) {
       const freshID = Math.floor(Math.random() * 9000000 + 1000000);
       this.loadPuzzle({
-        width: w,
-        height: h,
-        task: gen.task,
-        title: `${cat} ${diff.toUpperCase()} (Fresh #${freshID.toString().slice(-4)})`,
+        width: genFallback.width,
+        height: genFallback.height,
+        task: genFallback.task,
+        title: `${cat.toUpperCase()} ${diff.toUpperCase()} (Fresh #${String(freshID).slice(-4)})`,
         puzzleID: freshID
       });
-      this.markTaskPlayed(gen.task);
+      this.markTaskPlayed(genFallback.task);
       this.saveCurrentState();
       return;
     }
 
-    // Ultimate fallback if needed
-    const fallbackPuz = this.getNextLibraryPuzzle(cat, diff, true);
-    if (fallbackPuz) {
+    // 4. Ultimate fallback
+    const recycled = this.getNextLibraryPuzzle(libCat, libDiff, true);
+    if (recycled) {
       this.loadPuzzle({
-        width: fallbackPuz.width,
-        height: fallbackPuz.height,
-        task: fallbackPuz.task,
-        title: fallbackPuz.title || `${cat.toUpperCase()} ${diff.toUpperCase()}`,
-        puzzleID: fallbackPuz.puzzleID || Math.floor(Math.random() * 9000000 + 1000000)
+        width: recycled.width,
+        height: recycled.height,
+        task: recycled.task,
+        title: recycled.title || `${cat.toUpperCase()} ${diff.toUpperCase()}`,
+        puzzleID: recycled.puzzleID || Math.floor(Math.random() * 9000000 + 1000000)
       });
       this.saveCurrentState();
     }
@@ -1710,64 +1783,16 @@ class LightUpApp {
   }
 
   newRandomPuzzle(announce = true) {
-    const [w, h] = this.currentCat === '7x7' ? [7, 7] : (this.currentCat === '10x10' ? [10, 10] : (this.currentCat === '14x14' ? [14, 14] : [25, 25]));
-    const played = this.getPlayedTasks();
-
-    // Generate fresh unique procedural puzzle on-the-fly for all standard sizes including 25x25!
-    if (w <= 30) {
-      let gen = null;
-      for (let tries = 0; tries < 5; tries++) {
-        const candidate = AkariGenerator.generate(w, h, this.currentDiff);
-        if (candidate && !played.has(candidate.task) && candidate.task !== this.task) {
-          gen = candidate;
-          break;
-        }
-        if (candidate && !gen) gen = candidate;
-      }
-      if (gen) {
-        const freshID = Math.floor(Math.random() * 9000000 + 1000000);
-        this.loadPuzzle({
-          width: w,
-          height: h,
-          task: gen.task,
-          title: `${this.currentCat} ${this.currentDiff.toUpperCase()} (Fresh #${freshID.toString().slice(-4)})`,
-          puzzleID: freshID
-        });
-        this.markTaskPlayed(gen.task);
-        this.saveCurrentState();
-        if (announce && this.hintMessageEl && this.hintToastEl) {
-          this.hintMessageEl.textContent = `✨ Generated fresh unique ${this.currentCat} ${this.currentDiff} puzzle!`;
-          this.hintToastEl.classList.add('show');
-          setTimeout(() => this.hintToastEl.classList.remove('show'), 2500);
-        }
-        return;
-      }
-    }
-
-    // For 25x25 or if procedural generator falls back, draw from guaranteed non-repeating shuffle deck
-    const nextPuz = this.getNextLibraryPuzzle(this.currentCat, this.currentDiff);
-    if (nextPuz) {
-      this.loadPuzzle({
-        width: nextPuz.width,
-        height: nextPuz.height,
-        task: nextPuz.task,
-        title: nextPuz.title || `${this.currentCat.toUpperCase()} ${this.currentDiff.toUpperCase()}`,
-        puzzleID: nextPuz.puzzleID || Math.floor(Math.random() * 9000000 + 1000000)
-      });
-      this.markTaskPlayed(nextPuz.task);
-      this.saveCurrentState();
-      if (announce && this.hintMessageEl && this.hintToastEl) {
-        this.hintMessageEl.textContent = `✨ Loaded new ${this.currentCat} ${this.currentDiff} puzzle!`;
-        this.hintToastEl.classList.add('show');
-        setTimeout(() => this.hintToastEl.classList.remove('show'), 2500);
-      }
-      return;
-    }
-
-    // Ultimate fallback
+    const online = this.isOnline();
     this.loadCategoryPuzzle(this.currentCat, this.currentDiff, true);
+
     if (announce && this.hintMessageEl && this.hintToastEl) {
-      this.hintMessageEl.textContent = `✨ Loaded new ${this.currentCat} ${this.currentDiff} puzzle!`;
+      const label = this.currentCat === 'daily'
+        ? 'Daily 30x30'
+        : `${this.currentCat} ${this.currentDiff}`;
+      this.hintMessageEl.textContent = online
+        ? `✨ Generated fresh unique ${label} puzzle!`
+        : `✨ Loaded new cached ${label} puzzle (Offline Mode)!`;
       this.hintToastEl.classList.add('show');
       setTimeout(() => this.hintToastEl.classList.remove('show'), 2500);
     }

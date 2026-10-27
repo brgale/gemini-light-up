@@ -25,25 +25,41 @@ class AkariGenerator {
   static generate(width, height, difficulty = 'easy', seed = null) {
     const rng = seed !== null && seed !== undefined ? this.seededRng(seed) : Math.random;
 
-    const wallRatio = width <= 7 ? 0.22 : (width <= 10 ? 0.24 : (width <= 14 ? 0.26 : 0.30));
-    const targetWalls = Math.floor(width * height * wallRatio);
+    const area = width * height;
+    const wallRatio = width <= 7 ? 0.22 : (width <= 10 ? 0.24 : (width <= 14 ? 0.26 : (width <= 25 ? 0.30 : 0.33)));
+    const targetWalls = Math.floor(area * wallRatio);
     const maxAttempts = 50;
 
     const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      // 1. Generate symmetric walls with randomized corridor breaking (unique geometry every time)
+      // 1. Generate symmetric walls with randomized horizontal & vertical corridor breaking
       const grid = Array.from({ length: height }, () => Array(width).fill(-1));
       let currentWalls = 0;
 
       if (width >= 10) {
-        const maxRun = width >= 20 ? 6 : 5;
+        const maxRun = 5;
         for (let r = 0; r < Math.ceil(height / 2); r++) {
           let run = 0;
           for (let c = 0; c < width; c++) {
             if (grid[r][c] === -1) run++;
             else run = 0;
-            if (run >= maxRun && rng() < 0.45) {
+            if (run >= maxRun && rng() < 0.50) {
+              const sr = height - 1 - r;
+              const sc = width - 1 - c;
+              grid[r][c] = -2;
+              grid[sr][sc] = -2;
+              currentWalls += (r === sr && c === sc) ? 1 : 2;
+              run = 0;
+            }
+          }
+        }
+        for (let c = 0; c < Math.ceil(width / 2); c++) {
+          let run = 0;
+          for (let r = 0; r < height; r++) {
+            if (grid[r][c] === -1) run++;
+            else run = 0;
+            if (run >= maxRun && rng() < 0.50) {
               const sr = height - 1 - r;
               const sc = width - 1 - c;
               grid[r][c] = -2;
@@ -56,7 +72,8 @@ class AkariGenerator {
       }
 
       let tries = 0;
-      while (currentWalls < targetWalls && tries < 1000) {
+      const maxWallTries = targetWalls * 4;
+      while (currentWalls < targetWalls && tries < maxWallTries) {
         tries++;
         const r = Math.floor(rng() * height);
         const c = Math.floor(rng() * width);
@@ -151,18 +168,24 @@ class AkariGenerator {
         }
       }
 
-      // 4. Verify unique solution using fast Int8Array solver & multi-round ambiguity resolution
+      // 4. Verify unique solution using fast Int8Array solver & multi-point ambiguity resolution
       let solver = new AkariSolver(width, height, grid);
       let sols = solver.solve(2, 60);
 
-      for (let round = 0; round < 6 && sols.length === 2; round++) {
+      const maxRounds = area >= 900 ? 12 : 6;
+      const maxFixesPerRound = area >= 900 ? 4 : 1;
+
+      for (let round = 0; round < maxRounds && sols.length === 2; round++) {
         const s0 = new Set(sols[0].map(b => `${b.r},${b.c}`));
         const s1 = new Set(sols[1].map(b => `${b.r},${b.c}`));
-        let fixedOne = false;
+        const fixedCenters = [];
+        let fixedCount = 0;
 
         for (const k of s0) {
           if (!s1.has(k)) {
             const [br, bc] = k.split(',').map(Number);
+            if (fixedCenters.some(p => Math.abs(p.r - br) + Math.abs(p.c - bc) < 6)) continue;
+
             for (let d = 0; d < 4; d++) {
               const wr = br + dirs[d][0], wc = bc + dirs[d][1];
               const swr = height - 1 - wr, swc = width - 1 - wc;
@@ -176,17 +199,17 @@ class AkariGenerator {
                 }
                 grid[wr][wc] = c1;
                 grid[swr][swc] = c2;
-
-                solver = new AkariSolver(width, height, grid);
-                sols = solver.solve(2, 60);
-                fixedOne = true;
+                fixedCenters.push({ r: br, c: bc }, { r: height - 1 - br, c: width - 1 - bc });
+                fixedCount++;
                 break;
               }
             }
-            if (fixedOne) break;
+            if (fixedCount >= maxFixesPerRound) break;
           }
         }
-        if (!fixedOne) break;
+        if (fixedCount === 0) break;
+        solver = new AkariSolver(width, height, grid);
+        sols = solver.solve(2, 60);
       }
 
       if (sols.length !== 1) continue;
@@ -215,10 +238,11 @@ class AkariGenerator {
 
       const pruneRatio = difficulty === 'hard' ? 0.70 : (difficulty === 'normal' ? 0.52 : 0.35);
       const pruneTarget = Math.floor(clueIndices.length * pruneRatio);
-      const maxPruneNodes = difficulty === 'easy' ? 1 : (difficulty === 'normal' ? 10 : 40);
+      const maxPruneNodes = area >= 900 ? 1 : (difficulty === 'easy' ? 1 : (difficulty === 'normal' ? 10 : 40));
+      const maxTests = area >= 1200 ? Math.min(180, clueIndices.length) : clueIndices.length;
       let pruned = 0;
 
-      for (let i = 0; i < clueIndices.length && pruned < pruneTarget; i++) {
+      for (let i = 0; i < maxTests && pruned < pruneTarget; i++) {
         const cObj = solver.clues[clueIndices[i]];
         cObj.active = false;
         if (solver.solve(2, maxPruneNodes).length === 1) {

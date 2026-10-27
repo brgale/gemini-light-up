@@ -1,4 +1,4 @@
-const CACHE_NAME = 'light-up-offline-v19';
+const CACHE_NAME = 'light-up-offline-v20';
 const ASSETS = [
   './',
   './index.html',
