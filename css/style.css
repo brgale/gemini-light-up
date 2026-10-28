@@ -7,24 +7,24 @@
   --border-color: #e2e8f0;
   --border-strong: #94a3b8;
   
-  --wall-bg: #1e293b;
+  --wall-bg: #000000;
   --wall-text: #ffffff;
-  --wall-satisfied: #475569;
+  --wall-satisfied: #808080;
   --wall-error: #dc2626;
   
   --cell-bg: #ffffff;
-  --cell-border: #cbd5e1;
+  --cell-border: #000000;
   --cell-hover: #f1f5f9;
   --cell-mark-color: #64748b;
   
   --light-beam-bg: #fef08a;
-  --light-beam-active: #fde047;
-  --bulb-color: #ca8a04;
-  --bulb-glow: rgba(234, 179, 8, 0.45);
+  --light-beam-active: #fef08a;
+  --bulb-color: #ffffff;
+  --bulb-glow: transparent;
   
-  --clash-bg: #fee2e2;
-  --clash-color: #dc2626;
-  --clash-glow: rgba(220, 38, 38, 0.4);
+  --clash-bg: #fecaca;
+  --clash-color: #ef4444;
+  --clash-glow: rgba(220, 38, 38, 0.45);
   
   --primary: #2563eb;
   --primary-hover: #1d4ed8;
@@ -37,37 +37,37 @@
   --radius-md: 10px;
   --radius-lg: 16px;
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 10px rgba(0,0,0,0.18), 0 2px 4px rgba(0,0,0,0.12);
   --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.05);
 }
 
 [data-theme="dark"] {
-  --bg-primary: #0f172a;
-  --bg-surface: #1e293b;
-  --bg-elevated: #334155;
+  --bg-primary: #12161f;
+  --bg-surface: #1b2230;
+  --bg-elevated: #263042;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --border-color: #334155;
+  --border-color: #2e3a4e;
   --border-strong: #475569;
   
   --wall-bg: #000000;
   --wall-text: #ffffff;
-  --wall-satisfied: #475569;
+  --wall-satisfied: #808080;
   --wall-error: #ef4444;
   
-  --cell-bg: #ffffff;
-  --cell-border: #cbd5e1;
-  --cell-hover: #f1f5f9;
+  --cell-bg: #d6dae0;
+  --cell-border: #000000;
+  --cell-hover: #e2e8f0;
   --cell-mark-color: #475569;
   
   --light-beam-bg: #fef08a;
-  --light-beam-active: #fde047;
-  --bulb-color: #ca8a04;
-  --bulb-glow: rgba(234, 179, 8, 0.45);
+  --light-beam-active: #fef08a;
+  --bulb-color: #ffffff;
+  --bulb-glow: transparent;
   
-  --clash-bg: #fee2e2;
-  --clash-color: #dc2626;
-  --clash-glow: rgba(220, 38, 38, 0.4);
+  --clash-bg: #fca5a5;
+  --clash-color: #ef4444;
+  --clash-glow: rgba(220, 38, 38, 0.5);
   
   --primary: #3b82f6;
   --primary-hover: #60a5fa;
@@ -76,17 +76,17 @@
 }
 
 [data-blue-light="true"] {
-  --light-beam-bg: #60a5fa;
-  --light-beam-active: #3b82f6;
-  --bulb-color: #1d4ed8;
-  --bulb-glow: rgba(37, 99, 235, 0.5);
+  --light-beam-bg: #8faadc;
+  --light-beam-active: #8faadc;
+  --bulb-color: #ffffff;
+  --bulb-glow: transparent;
 }
 
 [data-theme="dark"][data-blue-light="true"] {
-  --light-beam-bg: #60a5fa;
-  --light-beam-active: #3b82f6;
-  --bulb-color: #1d4ed8;
-  --bulb-glow: rgba(37, 99, 235, 0.5);
+  --light-beam-bg: #8faadc;
+  --light-beam-active: #8faadc;
+  --bulb-color: #ffffff;
+  --bulb-glow: transparent;
 }
 
 * {
@@ -494,10 +494,12 @@ button, a, label, select, input[type="checkbox"], input[type="range"] {
 
 .puzzle-board {
   display: grid;
-  background: var(--border-strong);
+  background: #000000;
   gap: 1px;
-  border: 2px solid var(--border-strong);
-  border-radius: 4px;
+  padding: 1px;
+  border: 6px solid #f2e3bc;
+  outline: 1px solid #3a3a3a;
+  border-radius: 2px;
   box-shadow: var(--shadow-md);
   user-select: none;
   touch-action: none;
@@ -522,7 +524,7 @@ body.is-panning .cell {
   justify-content: center;
   background: var(--cell-bg);
   cursor: default;
-  transition: background-color 0.12s ease;
+  transition: background-color 0.08s ease;
   font-weight: 700;
   width: var(--cell-size);
   height: var(--cell-size);
@@ -530,35 +532,33 @@ body.is-panning .cell {
 }
 
 .cell.wall {
-  background: var(--wall-bg);
-  color: var(--wall-text);
+  background: #000000;
+  color: #ffffff;
   cursor: default;
 }
 
 .cell.wall-satisfied {
-  /* Keep background dark/wall-bg; grey out the number instead */
+  /* Keep background pure black; grey out the number like authentic Light Up */
 }
 
 .cell.wall-satisfied .clue-number {
-  color: #94a3b8 !important;
-  opacity: 0.82;
+  color: #808080 !important;
+  opacity: 0.9;
 }
 
 .cell.wall-error {
-  background: #2b0303 !important;
-  border-color: #ef4444 !important;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6) inset, 0 0 4px rgba(239, 68, 68, 0.4);
+  background: #1a0000 !important;
   animation: shake 0.35s ease;
 }
 
 .cell.wall-error .clue-number {
-  color: #ff3b3b !important;
-  text-shadow: 0 0 8px rgba(255, 59, 59, 0.9), 0 1px 2px rgba(0, 0, 0, 0.8);
+  color: #ff3333 !important;
+  text-shadow: 0 0 6px rgba(255, 51, 51, 0.7);
 }
 
 .clue-number {
-  font-size: calc(var(--cell-size, 38px) * 0.65);
-  font-weight: 800;
+  font-size: calc(var(--cell-size, 38px) * 0.58);
+  font-weight: 700;
   line-height: 1;
   pointer-events: none;
   user-select: none;
@@ -568,7 +568,7 @@ body.is-panning .cell {
   justify-content: center;
   width: 100%;
   height: 100%;
-  transition: color 0.15s ease, opacity 0.15s ease;
+  transition: color 0.12s ease, opacity 0.12s ease;
 }
 
 /* Lit state */
@@ -585,30 +585,46 @@ body.is-panning .cell {
   background: var(--clash-bg) !important;
 }
 
-.cell.bulb-clash svg {
+.cell.bulb-clash .bulb-glass {
   fill: var(--clash-color) !important;
-  filter: drop-shadow(0 0 8px var(--clash-glow)) !important;
+}
+
+.cell.bulb-clash svg {
+  filter: drop-shadow(0 0 6px var(--clash-glow)) !important;
   animation: pulse-clash 1.2s infinite;
 }
 
 /* Light Bulb Icon in Cell */
 .bulb-icon-svg {
-  width: 72%;
-  height: 72%;
-  fill: var(--bulb-color);
-  filter: drop-shadow(0 0 6px var(--bulb-glow));
+  width: 68%;
+  height: 68%;
   pointer-events: none;
-  transition: transform 0.15s ease;
+  transition: transform 0.12s ease;
 }
 
-.cell:hover .bulb-icon-svg {
-  transform: scale(1.08);
+.bulb-icon-svg .bulb-glass {
+  fill: #ffffff;
+  stroke: #111111;
+  stroke-width: 1.7;
+}
+
+.bulb-icon-svg .bulb-filament {
+  fill: none;
+  stroke: #334155;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
+
+.bulb-icon-svg .bulb-base {
+  fill: #64748b;
+  stroke: #111111;
+  stroke-width: 1.5;
 }
 
 /* Cross / Dot Mark */
 .cross-mark {
-  width: calc(var(--cell-size, 38px) * 0.65);
-  height: calc(var(--cell-size, 38px) * 0.65);
+  width: calc(var(--cell-size, 38px) * 0.34);
+  height: calc(var(--cell-size, 38px) * 0.34);
   position: relative;
   pointer-events: none;
   display: flex;
@@ -622,10 +638,10 @@ body.is-panning .cell {
   top: 50%;
   left: 0;
   width: 100%;
-  height: calc(var(--cell-size, 38px) * 0.08);
-  min-height: 2.5px;
-  background: #ef4444;
-  border-radius: 2px;
+  height: calc(var(--cell-size, 38px) * 0.065);
+  min-height: 1.8px;
+  background: #dc2626;
+  border-radius: 1px;
 }
 
 .cross-mark::before {

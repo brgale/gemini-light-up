@@ -964,6 +964,18 @@ class LightUpApp {
     return fallbackCandidate;
   }
 
+  isOverpopulatedSavedTask(task, width, height) {
+    if (!task || !width || !height || width * height < 400) return false;
+    let clues = 0;
+    for (let i = 0; i < task.length; i++) {
+      const ch = task[i];
+      if (ch >= '0' && ch <= '4') clues++;
+    }
+    // Old generator produced ~125-298 numbered clues on 25x25 and 30x30 boards;
+    // new open-density boards have ~55-95 numbered clues.
+    return clues > Math.floor(width * height * 0.14);
+  }
+
   loadCategoryPuzzle(cat, diff, forceNew = false) {
     // Save current active category before switching
     if (this.task && this.board && this.board.length > 0) {
@@ -994,10 +1006,11 @@ class LightUpApp {
         if (raw) {
           const saved = JSON.parse(raw);
           const isDailyExpired = (cat === 'daily' && saved.puzzleID !== today);
-          // Invalidate legacy static daily puzzle that previously repeated across days
+          // Invalidate legacy static daily puzzle or old overpopulated boards
           const isLegacyStaticDaily = (cat === 'daily' && saved.task && saved.task.startsWith('BcBB2a1B1bBbB1b1a2dBB1Bb2BbBbBBBbBkBb1Bf'));
+          const isOverpopulated = this.isOverpopulatedSavedTask(saved.task, saved.width, saved.height);
 
-          if (!isDailyExpired && !isLegacyStaticDaily && saved.task && saved.width && saved.height) {
+          if (!isDailyExpired && !isLegacyStaticDaily && !isOverpopulated && saved.task && saved.width && saved.height) {
             // If the saved puzzle was already completed, don't reopen the solved board—start a fresh puzzle!
             if (!saved.isSolved) {
               this.restoreSavedPuzzle(saved);
@@ -1243,7 +1256,9 @@ class LightUpApp {
 
   getBulbSVG() {
     return `<svg class="bulb-icon-svg" viewBox="0 0 24 24">
-      <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zm-2 17h4v1h-4v-1zm1 2h2v1h-2v-1z"/>
+      <path class="bulb-base" d="M9.5 17.2h5v2.3a1.5 1.5 0 0 1-1.5 1.5h-2a1.5 1.5 0 0 1-1.5-1.5v-2.3z"/>
+      <path class="bulb-glass" d="M12 2.8c-3.8 0-6.8 2.9-6.8 6.6 0 2.4 1.3 4.5 3.2 5.7.7.5 1.1 1.2 1.1 2.1h5c0-.9.4-1.6 1.1-2.1 1.9-1.2 3.2-3.3 3.2-5.7 0-3.7-3-6.6-6.8-6.6z"/>
+      <path class="bulb-filament" d="M10.3 17v-4.2c0-1.4 3.4-1.4 3.4 0V17"/>
     </svg>`;
   }
 
