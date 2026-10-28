@@ -496,7 +496,7 @@ button, a, label, select, input[type="checkbox"], input[type="range"] {
   display: grid;
   background: #000000;
   gap: 0;
-  padding: 0;
+  padding: 1px;
   border: 5px solid #f2e3bc;
   outline: 1px solid #000000;
   border-radius: 0;
@@ -523,22 +523,13 @@ body.is-panning .cell {
   align-items: center;
   justify-content: center;
   background: var(--cell-bg);
-  border-right: 1px solid #000000;
-  border-bottom: 1px solid #000000;
+  border: 1px solid #000000;
   cursor: default;
   transition: background-color 0.08s ease;
-  font-weight: 500;
+  font-weight: 600;
   width: var(--cell-size);
   height: var(--cell-size);
   box-sizing: border-box;
-}
-
-.cell[data-r="0"] {
-  border-top: 1px solid #000000;
-}
-
-.cell[data-c="0"] {
-  border-left: 1px solid #000000;
 }
 
 .cell.wall {
@@ -567,8 +558,8 @@ body.is-panning .cell {
 }
 
 .clue-number {
-  font-size: calc(var(--cell-size, 38px) * 0.50);
-  font-weight: 500;
+  font-size: calc(var(--cell-size, 38px) * 0.66);
+  font-weight: 600;
   line-height: 1;
   pointer-events: none;
   user-select: none;
