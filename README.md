@@ -1,4 +1,4 @@
-# Gemini Light Up - Offline Edition (Version 2.9)
+# Gemini Light Up - Offline Edition (Version 3.0)
 
 A fully featured, standalone, 100% offline version of the popular logic puzzle game **Light Up** (also known as **Akari**, Japanese: 美術館), inspired by [puzzle-light-up.com](https://www.puzzle-light-up.com/).
 

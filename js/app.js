@@ -967,13 +967,19 @@ class LightUpApp {
   isOverpopulatedSavedTask(task, width, height) {
     if (!task || !width || !height || width * height < 400) return false;
     let clues = 0;
+    let walls = 0;
     for (let i = 0; i < task.length; i++) {
       const ch = task[i];
-      if (ch >= '0' && ch <= '4') clues++;
+      if (ch >= '0' && ch <= '4') {
+        clues++;
+        walls++;
+      } else if (ch === 'B') {
+        walls++;
+      }
     }
-    // Old generator produced ~125-298 numbered clues on 25x25 and 30x30 boards;
-    // new open-density boards have ~55-95 numbered clues.
-    return clues > Math.floor(width * height * 0.14);
+    const area = width * height;
+    // Invalidate legacy boards that were either over-numbered (>14% clues) or under-walled (<25% total walls)
+    return clues > Math.floor(area * 0.14) || walls < Math.floor(area * 0.25);
   }
 
   loadCategoryPuzzle(cat, diff, forceNew = false) {
@@ -1310,6 +1316,10 @@ class LightUpApp {
       return 'error';
     }
     if (bulbCount === clue) {
+      // Keep '0' clues bright white until all surrounding orthogonal cells are marked with X or illuminated
+      if (clue === 0 && freeCount > 0) {
+        return 'progress';
+      }
       return 'satisfied';
     }
     return 'progress';

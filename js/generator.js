@@ -15,7 +15,7 @@ class AkariGenerator {
 
   static getSeedForDate(dateStr) {
     // dateStr: "YYYY-MM-DD"
-    let h = 29;
+    let h = 53;
     for (let i = 0; i < dateStr.length; i++) {
       h = (Math.imul(31, h) + dateStr.charCodeAt(i)) | 0;
     }
@@ -26,30 +26,49 @@ class AkariGenerator {
     const rng = seed !== null && seed !== undefined ? this.seededRng(seed) : Math.random;
 
     const area = width * height;
-    const wallRatio = width <= 7 ? 0.19 : (width <= 10 ? 0.19 : (width <= 14 ? 0.195 : 0.195));
+    const wallRatio = width <= 7 ? 0.22 : (width <= 10 ? 0.24 : (width <= 14 ? 0.26 : 0.275));
     const targetWalls = Math.floor(area * wallRatio);
     const maxAttempts = 50;
 
     const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      // 1. Generate symmetric walls with natural open corridors
       const grid = Array.from({ length: height }, () => Array(width).fill(-1));
       let currentWalls = 0;
 
+      // 1a. Seed symmetric random walls first (48% of target) so natural clusters form
+      const initialTarget = Math.floor(targetWalls * 0.48);
+      let tries = 0;
+      const maxWallTries = targetWalls * 6;
+      while (currentWalls < initialTarget && tries < maxWallTries) {
+        tries++;
+        const r = Math.floor(rng() * height);
+        const c = Math.floor(rng() * width);
+        const sr = height - 1 - r;
+        const sc = width - 1 - c;
+
+        if (grid[r][c] === -1 && grid[sr][sc] === -1) {
+          grid[r][c] = -2;
+          grid[sr][sc] = -2;
+          currentWalls += (r === sr && c === sc) ? 1 : 2;
+        }
+      }
+
+      // 1b. Break long horizontal and vertical corridors so no wide-open strips remain (max corridor 5-6)
       if (width >= 10) {
-        const maxRun = 6;
         for (let r = 0; r < Math.ceil(height / 2); r++) {
           let run = 0;
           for (let c = 0; c < width; c++) {
             if (grid[r][c] === -1) run++;
             else run = 0;
-            if (run >= maxRun && rng() < 0.42) {
+            if ((run >= 5 && rng() < 0.55) || run >= 7) {
               const sr = height - 1 - r;
               const sc = width - 1 - c;
-              grid[r][c] = -2;
-              grid[sr][sc] = -2;
-              currentWalls += (r === sr && c === sc) ? 1 : 2;
+              if (grid[r][c] === -1 && grid[sr][sc] === -1) {
+                grid[r][c] = -2;
+                grid[sr][sc] = -2;
+                currentWalls += (r === sr && c === sc) ? 1 : 2;
+              }
               run = 0;
             }
           }
@@ -59,20 +78,21 @@ class AkariGenerator {
           for (let r = 0; r < height; r++) {
             if (grid[r][c] === -1) run++;
             else run = 0;
-            if (run >= maxRun && rng() < 0.42) {
+            if ((run >= 5 && rng() < 0.55) || run >= 7) {
               const sr = height - 1 - r;
               const sc = width - 1 - c;
-              grid[r][c] = -2;
-              grid[sr][sc] = -2;
-              currentWalls += (r === sr && c === sc) ? 1 : 2;
+              if (grid[r][c] === -1 && grid[sr][sc] === -1) {
+                grid[r][c] = -2;
+                grid[sr][sc] = -2;
+                currentWalls += (r === sr && c === sc) ? 1 : 2;
+              }
               run = 0;
             }
           }
         }
       }
 
-      let tries = 0;
-      const maxWallTries = targetWalls * 4;
+      // 1c. Top up to targetWalls
       while (currentWalls < targetWalls && tries < maxWallTries) {
         tries++;
         const r = Math.floor(rng() * height);
@@ -88,7 +108,7 @@ class AkariGenerator {
       }
 
       // 2. Place bulbs preferring wall-adjacent positions so clues naturally form 2s, 3s, and 4s
-      // and allow the majority of black walls to remain unnumbered (B)
+      // and allow the majority of black walls (~62-68%) to remain unnumbered (B)
       const whiteCells = [];
       const adjWallScore = new Int8Array(area);
       for (let r = 0; r < height; r++) {
@@ -272,16 +292,16 @@ class AkariGenerator {
       const sols = solver.solve(2, 40);
       if (sols.length !== 1) continue;
 
-      // 5. Prune clues aggressively so most black walls are unnumbered (B) like authentic puzzles,
+      // 5. Prune clues aggressively so most black walls (~62-68%) are unnumbered (B) like authentic puzzles,
       // prioritizing removing redundant 0 and 1 clues while preserving higher anchor clues
       const clueIndices = solver.clues.map((_, i) => i);
       const clueOrderNoise = clueIndices.map(() => rng() * 1.6);
       clueIndices.sort((a, b) => (solver.clues[a].clue + clueOrderNoise[a]) - (solver.clues[b].clue + clueOrderNoise[b]));
 
-      const pruneRatio = difficulty === 'hard' ? 0.78 : (difficulty === 'normal' ? 0.70 : 0.66);
+      const pruneRatio = difficulty === 'hard' ? 0.76 : (difficulty === 'normal' ? 0.68 : 0.65);
       const pruneTarget = Math.floor(clueIndices.length * pruneRatio);
       const maxPruneNodes = difficulty === 'easy' ? 2 : (difficulty === 'normal' ? 6 : 24);
-      const maxTests = area >= 1200 ? Math.min(240, clueIndices.length) : clueIndices.length;
+      const maxTests = area >= 1200 ? Math.min(260, clueIndices.length) : clueIndices.length;
       let pruned = 0;
 
       for (let i = 0; i < maxTests && pruned < pruneTarget; i++) {
