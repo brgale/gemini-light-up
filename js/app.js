@@ -361,8 +361,15 @@ class LightUpApp {
       }
     });
 
-    // Touch support: Natural iPad single-finger drag anywhere & GPU multi-touch pinch-to-zoom
+    // Touch support: Natural iPad single-finger drag anywhere & focal-point locked multi-touch pinch-to-zoom
     if (this.boardContainer) {
+      // Prevent Safari/WebKit native gesture bounce from competing with board pinch-zoom
+      ['gesturestart', 'gesturechange', 'gestureend'].forEach(evtName => {
+        this.boardContainer.addEventListener(evtName, (e) => {
+          if (e.cancelable) e.preventDefault();
+        }, { passive: false });
+      });
+
       this.boardContainer.addEventListener('touchstart', (e) => {
         // Cancel any momentum animation running
         if (this.momentumRaf) {
@@ -371,10 +378,14 @@ class LightUpApp {
         }
 
         if (e.touches && e.touches.length >= 2) {
-          // Two fingers: initiates fluid multi-touch pinch & pan
+          // Two fingers: initiates fluid focal-point locked multi-touch pinch & pan
+          if (e.cancelable) e.preventDefault();
           this.isPinching = true;
+          this.wasPinching = true;
           this.isTouchPanning = false;
           this.touchTargetCell = null;
+          this.touchVelocityX = 0;
+          this.touchVelocityY = 0;
           this.isMouseDown = false;
           this.dragAction = null;
           this.lastDragCell = null;
@@ -384,13 +395,13 @@ class LightUpApp {
           const t2 = e.touches[1];
           this.pinchStartDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
           this.pinchStartZoom = this.zoomScale;
-          this.pinchScaleRatio = 1.0;
           this.pinchLastMidX = (t1.clientX + t2.clientX) / 2;
           this.pinchLastMidY = (t1.clientY + t2.clientY) / 2;
           return;
         }
 
         if (e.touches && e.touches.length === 1) {
+          this.wasPinching = false;
           const touch = e.touches[0];
           this.touchStartTime = Date.now();
           this.touchStartX = touch.clientX;
@@ -434,11 +445,14 @@ class LightUpApp {
 
       this.boardContainer.addEventListener('touchmove', (e) => {
         if (e.touches && e.touches.length >= 2) {
-          // Multi-touch pinch & pan active
+          // Multi-touch pinch & pan active: apply real-time layout zoom anchored to finger midpoint
           if (e.cancelable) e.preventDefault();
           this.isPinching = true;
+          this.wasPinching = true;
           this.isTouchPanning = false;
           this.touchTargetCell = null;
+          this.touchVelocityX = 0;
+          this.touchVelocityY = 0;
           this.isMouseDown = false;
           this.dragAction = null;
           this.lastDragCell = null;
@@ -448,7 +462,7 @@ class LightUpApp {
           const midX = (t1.clientX + t2.clientX) / 2;
           const midY = (t1.clientY + t2.clientY) / 2;
 
-          // Two-finger Pan
+          // 1. Two-finger Pan delta
           const dx = midX - this.pinchLastMidX;
           const dy = midY - this.pinchLastMidY;
           this.pinchLastMidX = midX;
@@ -456,29 +470,24 @@ class LightUpApp {
           this.boardContainer.scrollLeft -= dx;
           this.boardContainer.scrollTop -= dy;
 
-          // Two-finger GPU-accelerated smooth Pinch Zoom
+          // 2. Two-finger Pinch Zoom anchored directly to (midX, midY) so release never jumps!
           const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
           if (this.pinchStartDistance && this.pinchStartDistance > 0) {
-            this.pinchScaleRatio = dist / this.pinchStartDistance;
-            if (!this.pinchRaf) {
-              this.pinchRaf = requestAnimationFrame(() => {
-                this.pinchRaf = null;
-                if (this.isPinching && this.boardViewport) {
-                  this.boardViewport.style.transform = `scale(${this.pinchScaleRatio})`;
-                  this.boardViewport.style.transformOrigin = 'center center';
-                  const previewZoom = Math.round(this.pinchStartZoom * this.pinchScaleRatio * 100);
-                  if (this.zoomLevelLabel) {
-                    this.zoomLevelLabel.textContent = `${previewZoom}%`;
-                  }
-                }
-              });
-            }
+            const ratio = dist / this.pinchStartDistance;
+            const targetZoom = Math.max(0.3, Math.min(2.5, this.pinchStartZoom * ratio));
+            this.setZoom(targetZoom, false, midX, midY);
           }
           return;
         }
 
         // Single-finger touch handling
         if (e.touches && e.touches.length === 1) {
+          // If lifting fingers at the end of a 2-finger pinch, ignore remaining single finger until all fingers lift
+          if (this.wasPinching || this.isPinching) {
+            if (e.cancelable) e.preventDefault();
+            return;
+          }
+
           const touch = e.touches[0];
 
           // Track velocity for kinetic momentum
@@ -535,23 +544,22 @@ class LightUpApp {
       }, { passive: false });
     }
 
-    window.addEventListener('touchend', (e) => {
-      if (this.isPinching) {
+    const handleTouchFinish = (e) => {
+      if (this.isPinching || this.wasPinching) {
         if (!e.touches || e.touches.length < 2) {
-          this.isPinching = false;
-          if (this.pinchRaf) {
-            cancelAnimationFrame(this.pinchRaf);
-            this.pinchRaf = null;
+          if (this.isPinching) {
+            this.isPinching = false;
+            this.pinchStartDistance = null;
+            this.saveZoomForCurrentSize(this.zoomScale);
           }
-          if (this.boardViewport) {
-            this.boardViewport.style.transform = '';
-            this.boardViewport.style.transformOrigin = '';
-          }
-          const finalZoom = Math.max(0.3, Math.min(2.5, Math.round(this.pinchStartZoom * (this.pinchScaleRatio || 1.0) * 100) / 100));
-          this.setZoom(finalZoom, true);
-          this.pinchStartDistance = null;
-          this.pinchScaleRatio = 1.0;
         }
+        if (!e.touches || e.touches.length === 0) {
+          this.wasPinching = false;
+        }
+        this.isTouchPanning = false;
+        this.touchTargetCell = null;
+        this.touchVelocityX = 0;
+        this.touchVelocityY = 0;
         this.isMouseDown = false;
         this.dragAction = null;
         this.lastDragCell = null;
@@ -618,7 +626,10 @@ class LightUpApp {
       this.isMouseDown = false;
       this.dragAction = null;
       this.lastDragCell = null;
-    }, { passive: false });
+    };
+
+    window.addEventListener('touchend', handleTouchFinish, { passive: false });
+    window.addEventListener('touchcancel', handleTouchFinish, { passive: false });
 
     window.addEventListener('beforeunload', () => {
       this.saveCurrentState();
@@ -1156,9 +1167,9 @@ class LightUpApp {
     const colCount = showCoords ? this.width + 1 : this.width;
     const rowCount = showCoords ? this.height + 1 : this.height;
 
-    // Ideal cell size based on board dimension and current zoom scale
+    // Ideal cell size based on board dimension and current zoom scale (fractional precision avoids rounding jumps)
     this.baseCellSize = Math.max(20, Math.min(56, Math.floor(540 / Math.max(this.width, this.height))));
-    const cellSize = Math.max(16, Math.round(this.baseCellSize * this.zoomScale));
+    const cellSize = Math.max(12, +(this.baseCellSize * this.zoomScale).toFixed(3));
     this.boardEl.style.setProperty('--cell-size', `${cellSize}px`);
     this.boardEl.style.gridTemplateColumns = showCoords
       ? `24px repeat(${this.width}, ${cellSize}px)`
@@ -1867,18 +1878,29 @@ class LightUpApp {
     }
   }
 
-  setZoom(scale, save = true) {
+  setZoom(scale, save = true, focalClientX = null, focalClientY = null) {
     this.zoomScale = Math.max(0.3, Math.min(2.5, scale));
     if (this.zoomSlider) this.zoomSlider.value = this.zoomScale;
     if (this.zoomLevelLabel) {
       this.zoomLevelLabel.textContent = `${Math.round(this.zoomScale * 100)}%`;
     }
-    // Clear any transform scale so board expands in natural DOM layout
     if (this.boardViewport) {
       this.boardViewport.style.transform = '';
     }
 
     if (this.boardContainer && this.boardEl && this.width && this.height) {
+      // Measure board position relative to focal point (finger midpoint or container center) before resize
+      const rectBefore = (typeof this.boardEl.getBoundingClientRect === 'function')
+        ? this.boardEl.getBoundingClientRect()
+        : null;
+      if ((focalClientX === null || focalClientY === null) && typeof this.boardContainer.getBoundingClientRect === 'function') {
+        const cRect = this.boardContainer.getBoundingClientRect();
+        if (cRect && cRect.width > 0 && cRect.height > 0) {
+          focalClientX = cRect.left + cRect.width / 2;
+          focalClientY = cRect.top + cRect.height / 2;
+        }
+      }
+
       const oldMaxX = this.boardContainer.scrollWidth - this.boardContainer.clientWidth;
       const oldMaxY = this.boardContainer.scrollHeight - this.boardContainer.clientHeight;
       const ratioX = oldMaxX > 0 ? this.boardContainer.scrollLeft / oldMaxX : 0.5;
@@ -1886,7 +1908,7 @@ class LightUpApp {
 
       const showCoords = this.settings.showCoordinates;
       const base = this.baseCellSize || Math.max(20, Math.min(56, Math.floor(540 / Math.max(this.width, this.height))));
-      const cellSize = Math.max(16, Math.round(base * this.zoomScale));
+      const cellSize = Math.max(12, +(base * this.zoomScale).toFixed(3));
       this.boardEl.style.setProperty('--cell-size', `${cellSize}px`);
       this.boardEl.style.gridTemplateColumns = showCoords
         ? `24px repeat(${this.width}, ${cellSize}px)`
@@ -1895,14 +1917,26 @@ class LightUpApp {
         ? `24px repeat(${this.height}, ${cellSize}px)`
         : `repeat(${this.height}, ${cellSize}px)`;
 
-      const newMaxX = this.boardContainer.scrollWidth - this.boardContainer.clientWidth;
-      const newMaxY = this.boardContainer.scrollHeight - this.boardContainer.clientHeight;
-      if (newMaxX > 0) this.boardContainer.scrollLeft = Math.round(ratioX * newMaxX);
-      if (newMaxY > 0) this.boardContainer.scrollTop = Math.round(ratioY * newMaxY);
+      if (rectBefore && rectBefore.width > 0 && rectBefore.height > 0 && focalClientX !== null && focalClientY !== null) {
+        const uX = (focalClientX - rectBefore.left) / rectBefore.width;
+        const uY = (focalClientY - rectBefore.top) / rectBefore.height;
+        const rectAfter = this.boardEl.getBoundingClientRect();
+        if (rectAfter && rectAfter.width > 0 && rectAfter.height > 0) {
+          const newClientX = rectAfter.left + uX * rectAfter.width;
+          const newClientY = rectAfter.top + uY * rectAfter.height;
+          this.boardContainer.scrollLeft += (newClientX - focalClientX);
+          this.boardContainer.scrollTop += (newClientY - focalClientY);
+        }
+      } else {
+        const newMaxX = this.boardContainer.scrollWidth - this.boardContainer.clientWidth;
+        const newMaxY = this.boardContainer.scrollHeight - this.boardContainer.clientHeight;
+        if (newMaxX > 0) this.boardContainer.scrollLeft = Math.round(ratioX * newMaxX);
+        if (newMaxY > 0) this.boardContainer.scrollTop = Math.round(ratioY * newMaxY);
+      }
     } else if (this.boardEl && this.width && this.height) {
       const showCoords = this.settings.showCoordinates;
       const base = this.baseCellSize || Math.max(20, Math.min(56, Math.floor(540 / Math.max(this.width, this.height))));
-      const cellSize = Math.max(16, Math.round(base * this.zoomScale));
+      const cellSize = Math.max(12, +(base * this.zoomScale).toFixed(3));
       this.boardEl.style.setProperty('--cell-size', `${cellSize}px`);
       this.boardEl.style.gridTemplateColumns = showCoords
         ? `24px repeat(${this.width}, ${cellSize}px)`
