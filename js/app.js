@@ -307,22 +307,12 @@ class LightUpApp {
       }
     });
 
-    // Mousedown on board container for panning (Pan tool, Spacebar, middle mouse, or clicking walls/margins)
+    // Mousedown on board container for panning (only when Pan tool is active, Spacebar is held, or middle mouse button is used)
     if (this.boardContainer) {
       this.boardContainer.addEventListener('mousedown', (e) => {
         if (this.isPaused || this.isSolved) return;
-        const target = e.target;
-        const cell = target ? target.closest('.cell') : null;
-        let isWhiteCell = false;
-        if (cell && cell.dataset.r !== undefined && cell.dataset.c !== undefined) {
-          const r = parseInt(cell.dataset.r, 10);
-          const c = parseInt(cell.dataset.c, 10);
-          if (!isNaN(r) && !isNaN(c) && this.board[r] && this.board[r][c] === -1) {
-            isWhiteCell = true;
-          }
-        }
 
-        if (this.settings.drawStyle === 'pan' || this.isSpacePressed || e.button === 1 || !isWhiteCell) {
+        if (this.settings.drawStyle === 'pan' || this.isSpacePressed || e.button === 1) {
           if (e.button === 0 || e.button === 1) {
             e.preventDefault();
             this.isPanning = true;
