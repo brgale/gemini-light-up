@@ -460,12 +460,25 @@ class LightUpApp {
           this.boardContainer.scrollLeft -= dx;
           this.boardContainer.scrollTop -= dy;
 
-          // 2. Two-finger Pinch Zoom anchored directly to (midX, midY) so release never jumps!
+          // 2. Two-finger Pinch Zoom anchored to (midX, midY), coalesced to 1 layout per display frame
           const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
           if (this.pinchStartDistance && this.pinchStartDistance > 0) {
             const ratio = dist / this.pinchStartDistance;
-            const targetZoom = Math.max(0.3, Math.min(2.5, this.pinchStartZoom * ratio));
-            this.setZoom(targetZoom, false, midX, midY);
+            this.pendingPinchZoom = Math.max(0.3, Math.min(2.5, this.pinchStartZoom * ratio));
+            this.pendingPinchMidX = midX;
+            this.pendingPinchMidY = midY;
+            if (typeof requestAnimationFrame === 'function') {
+              if (!this.pinchRaf) {
+                this.pinchRaf = requestAnimationFrame(() => {
+                  this.pinchRaf = null;
+                  if (this.isPinching && this.pendingPinchZoom !== null && this.pendingPinchZoom !== undefined) {
+                    this.setZoom(this.pendingPinchZoom, false, this.pendingPinchMidX, this.pendingPinchMidY);
+                  }
+                });
+              }
+            } else {
+              this.setZoom(this.pendingPinchZoom, false, midX, midY);
+            }
           }
           return;
         }
@@ -537,9 +550,17 @@ class LightUpApp {
     const handleTouchFinish = (e) => {
       if (this.isPinching || this.wasPinching) {
         if (!e.touches || e.touches.length < 2) {
+          if (this.pinchRaf) {
+            cancelAnimationFrame(this.pinchRaf);
+            this.pinchRaf = null;
+            if (this.pendingPinchZoom !== null && this.pendingPinchZoom !== undefined) {
+              this.setZoom(this.pendingPinchZoom, false, this.pendingPinchMidX, this.pendingPinchMidY);
+            }
+          }
           if (this.isPinching) {
             this.isPinching = false;
             this.pinchStartDistance = null;
+            this.pendingPinchZoom = null;
             this.saveZoomForCurrentSize(this.zoomScale);
           }
         }
@@ -724,10 +745,24 @@ class LightUpApp {
     return `akari_state_${cat}_${diff}`;
   }
 
+  scheduleSaveState() {
+    if (this._saveTimeout) clearTimeout(this._saveTimeout);
+    this._saveTimeout = setTimeout(() => {
+      this._saveTimeout = null;
+      this.saveCurrentState();
+    }, 60);
+  }
+
   saveCurrentState() {
+    if (this._saveTimeout) {
+      clearTimeout(this._saveTimeout);
+      this._saveTimeout = null;
+    }
     if (!this.task || !this.board || this.board.length === 0) return;
     try {
       const key = this.getCategoryKey();
+      const recentUndo = this.undoStack.slice(-25);
+      const recentRedo = this.redoStack.slice(-25);
       const state = {
         cat: this.currentCat,
         diff: this.currentDiff,
@@ -747,14 +782,14 @@ class LightUpApp {
           crosses: Array.from(cp.crosses),
           time: cp.time
         })),
-        undoStack: this.undoStack.map(u => ({
+        undoStack: recentUndo.map(u => ({
           prevBulbs: Array.from(u.prevBulbs),
           prevCrosses: Array.from(u.prevCrosses),
           newBulbs: Array.from(u.newBulbs),
           newCrosses: Array.from(u.newCrosses),
           lastChange: u.lastChange
         })),
-        redoStack: this.redoStack.map(r => ({
+        redoStack: recentRedo.map(r => ({
           prevBulbs: Array.from(r.prevBulbs),
           prevCrosses: Array.from(r.prevCrosses),
           newBulbs: Array.from(r.newBulbs),
@@ -1146,18 +1181,13 @@ class LightUpApp {
     }
   }
 
-  renderBoard() {
+  buildBoardDOM(structKey) {
+    this._domStructKey = structKey;
     this.boardEl.innerHTML = '';
+    this.boardEl.children = [];
+    this.cellEls = Array.from({ length: this.height }, () => new Array(this.width));
 
-    // Calculate light rays & clashes
-    const { litMap, clashes } = this.calculateLight();
-
-    // Coordinate labels setup
     const showCoords = this.settings.showCoordinates;
-    const colCount = showCoords ? this.width + 1 : this.width;
-    const rowCount = showCoords ? this.height + 1 : this.height;
-
-    // Ideal cell size based on board dimension and current zoom scale (fractional precision avoids rounding jumps)
     this.baseCellSize = Math.max(20, Math.min(56, Math.floor(540 / Math.max(this.width, this.height))));
     const cellSize = Math.max(12, +(this.baseCellSize * this.zoomScale).toFixed(3));
     this.boardEl.style.setProperty('--cell-size', `${cellSize}px`);
@@ -1171,7 +1201,6 @@ class LightUpApp {
       this.boardViewport.style.transform = '';
     }
 
-    // Top coordinates
     if (showCoords) {
       const corner = document.createElement('div');
       corner.className = 'coord-label';
@@ -1194,61 +1223,21 @@ class LightUpApp {
 
       for (let c = 0; c < this.width; c++) {
         const cellVal = this.board[r][c];
-        const key = `${r},${c}`;
         const cell = document.createElement('div');
         cell.className = 'cell';
         cell.dataset.r = r;
         cell.dataset.c = c;
-
-        if (this.focusedCell.r === r && this.focusedCell.c === c) {
-          cell.classList.add('keyboard-focus');
-        }
-
-        if (this.settings.highlightChange && this.lastChange && this.lastChange.r === r && this.lastChange.c === c) {
-          cell.classList.add('last-change');
-        }
+        cell._iconState = 'empty';
 
         if (cellVal >= -2 && cellVal !== -1) {
-          // Black wall cell
           cell.classList.add('wall');
           if (cellVal >= 0) {
             const clueSpan = document.createElement('span');
             clueSpan.className = 'clue-number';
             clueSpan.textContent = cellVal;
             cell.appendChild(clueSpan);
-
-            // Check clue status
-            const clueState = this.checkClueState(r, c, cellVal, litMap);
-            if (this.settings.markErrors && clueState === 'error') {
-              cell.classList.add('wall-error');
-            } else if (this.settings.grayCompleted && clueState === 'satisfied') {
-              cell.classList.add('wall-satisfied');
-            }
           }
         } else {
-          // White room cell
-          const isLit = litMap.has(key);
-          const hasBulb = this.bulbs.has(key);
-          const hasCross = this.crosses.has(key);
-          const isClashing = clashes.has(key);
-
-          if (isLit) {
-            cell.classList.add('lit');
-          }
-
-          if (hasBulb) {
-            cell.classList.add('lit-center');
-            if (isClashing) {
-              cell.classList.add('bulb-clash');
-            }
-            cell.innerHTML = this.getBulbSVG();
-          } else if (hasCross) {
-            const cross = document.createElement('div');
-            cross.className = 'cross-mark';
-            cell.appendChild(cross);
-          }
-
-          // Mouse / Touch Event listeners
           cell.addEventListener('mousedown', (e) => this.handleCellMouseDown(e, r, c));
           cell.addEventListener('mouseenter', (e) => this.handleCellMouseEnter(e, r, c));
           cell.addEventListener('contextmenu', (e) => {
@@ -1256,9 +1245,80 @@ class LightUpApp {
           });
         }
 
+        this.cellEls[r][c] = cell;
         this.boardEl.appendChild(cell);
       }
     }
+  }
+
+  renderBoard() {
+    const showCoords = this.settings.showCoordinates;
+    const structKey = `${this.width}x${this.height}_${showCoords ? 1 : 0}_${this.task}`;
+    if (this._domStructKey !== structKey || !this.cellEls || this.cellEls.length !== this.height) {
+      this.buildBoardDOM(structKey);
+    }
+
+    // Calculate light rays & clashes
+    const { litMap, clashes } = this.calculateLight();
+    let unlitWhiteCount = 0;
+    let unsatisfiedClueCount = 0;
+
+    for (let r = 0; r < this.height; r++) {
+      const rowEls = this.cellEls[r];
+      const boardRow = this.board[r];
+      for (let c = 0; c < this.width; c++) {
+        const cell = rowEls[c];
+        const cellVal = boardRow[c];
+        const key = `${r},${c}`;
+
+        const isFocused = (this.focusedCell.r === r && this.focusedCell.c === c);
+        cell.classList.toggle('keyboard-focus', isFocused);
+
+        const isLastChange = !!(this.settings.highlightChange && this.lastChange && this.lastChange.r === r && this.lastChange.c === c);
+        cell.classList.toggle('last-change', isLastChange);
+
+        if (cellVal >= -2 && cellVal !== -1) {
+          if (cellVal >= 0) {
+            const clueState = this.checkClueState(r, c, cellVal, litMap);
+            const adj = this.solver.getAdjWhite(r, c);
+            let adjBulbs = 0;
+            for (let i = 0; i < adj.length; i++) {
+              if (this.bulbs.has(adj[i].key)) adjBulbs++;
+            }
+            if (adjBulbs !== cellVal) unsatisfiedClueCount++;
+
+            const isError = !!(this.settings.markErrors && clueState === 'error');
+            const isSatisfied = !!(!isError && this.settings.grayCompleted && clueState === 'satisfied');
+            cell.classList.toggle('wall-error', isError);
+            cell.classList.toggle('wall-satisfied', isSatisfied);
+          }
+        } else {
+          const isLit = litMap.has(key);
+          if (!isLit) unlitWhiteCount++;
+          const hasBulb = this.bulbs.has(key);
+          const hasCross = !hasBulb && this.crosses.has(key);
+          const isClashing = hasBulb && clashes.has(key);
+
+          cell.classList.toggle('lit', isLit);
+          cell.classList.toggle('lit-center', hasBulb);
+          cell.classList.toggle('bulb-clash', isClashing);
+
+          const targetIcon = hasBulb ? 'bulb' : (hasCross ? 'cross' : 'empty');
+          if (cell._iconState !== targetIcon) {
+            cell._iconState = targetIcon;
+            if (targetIcon === 'bulb') {
+              cell.innerHTML = this.getBulbSVG();
+            } else if (targetIcon === 'cross') {
+              cell.innerHTML = '<div class="cross-mark"></div>';
+            } else {
+              cell.innerHTML = '';
+            }
+          }
+        }
+      }
+    }
+
+    this._isBoardCurrentlySolved = (clashes.size === 0 && unlitWhiteCount === 0 && unsatisfiedClueCount === 0);
   }
 
   getBulbSVG() {
@@ -1560,8 +1620,10 @@ class LightUpApp {
     this.lastChange = { r, c };
 
     this.renderBoard();
-    this.saveCurrentState();
-    this.checkSolution(false); // auto-check silently
+    this.scheduleSaveState();
+    if (this._isBoardCurrentlySolved) {
+      this.checkSolution(false);
+    }
   }
 
   undo() {
