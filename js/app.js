@@ -1184,7 +1184,6 @@ class LightUpApp {
   buildBoardDOM(structKey) {
     this._domStructKey = structKey;
     this.boardEl.innerHTML = '';
-    this.boardEl.children = [];
     this.cellEls = Array.from({ length: this.height }, () => new Array(this.width));
 
     const showCoords = this.settings.showCoordinates;
